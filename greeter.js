@@ -1,28 +1,49 @@
+/* jslint bitwise: true */
+/* jshint esversion: 6 */
+
 const fs = require('fs');
+const log = require('winston');
+const slack = require('slack-node');
 const yargs = require('yargs');
 
 const Defaults = {
-  host:      '127.0.0.1',
-  port:      1337,
-  reconnect: true
+  host:         '127.0.0.1',
+  port:         1337,
+  reconnect:    true,
+  slackChannel: '#newavatars',
+  slackToken:   ''
 };
 
 const Argv = yargs
   .usage('Usage: $0 [options]')
   .help('help')
-  .option('help', { alias: '?', describe: 'Get this usage/help information.'})
-  .option('host', { alias: 'h', default: Defaults.host, describe: 'Host name or address of the Elko server.'})
-  .option('port', { alias: 'p', default: Defaults.port, describe: 'Port number for the Elko server.'})
+  .option('help', { alias: '?', describe: 'Get this usage/help information.' })
+  .option('host', { alias: 'h', default: Defaults.host, describe: 'Host name or address of the Elko server.' })
+  .option('port', { alias: 'p', default: Defaults.port, describe: 'Port number for the Elko server.' })
   .option('context', { alias: 'c', describe: 'Context to enter.' })
   .option('greetingFile', { alias: 'g', describe: 'File to be played as a greeting.' })
   .option('reconnect', { alias: 'r', default: Defaults.reconnect, describe: 'Whether the bot should reconnect on disconnection.' })
-  .option('username', { alias: 'u', describe: 'Username of this bot.'})
+  .option('slackToken', { alias: 's', default: Defaults.slackToken, describe: 'Token for sending user notifications to Slack.' })
+  .option('slackChannel', { alias: 'l', default: Defaults.slackChannel, describe: 'Default Slack channel to use for notifications.' })
+  .option('username', { alias: 'u', describe: 'Username of this bot.' })
   .argv
 
-const GreeterBot = new ElkoBot('127.0.0.1', 1337);
-const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split("\n");
+const GreeterBot = new ElkoBot(Argv.host, Argv.port);
+const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split('\n');
+const SlackEnabled = Argv.slackToken !== '';
+const Slack = new Slack(Argv.slackToken);
 
 GreeterBot.on('HEREIS_$', function(bot, msg) {
+  if (SlackEnabled) {
+    Slack.api('chat.postMessage', {
+      text: 'New user arrived: ' + msg.from,
+      channel: Argv.slackChannel
+    }, function(err, response){
+      if (err) {
+        log.error(err);
+      }
+    });
+  }
   bot.send({
     op: 'POSTURE',
     to: 'ME',
@@ -71,7 +92,7 @@ GreeterBot.on('connect', function(bot) {
     op: 'SPEAK',
     to: 'ME',
     esp: 0,
-    text: "Hey there! I'm Phil, the greeting bot!",
+    text: "Hey there! I'm the greeting bot!",
     Telko: {
       delay: 20
     }

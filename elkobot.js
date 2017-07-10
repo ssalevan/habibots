@@ -53,19 +53,18 @@ class ElkoBot {
     if (!this.connected) {
       this.server = net.connect(this.port, this.host, function() {
         log.info('Connected to server @%s:%d', this.host, this.port);
+        for (callback in this.callbacks.connected) {
+          callback(this);
+        }
       });
       this.server.on('data', this.processData);
       this.server.on('end', this.onDisconnect);
-
-      for (callback in this.callbacks.connected) {
-        callback(this);
-      }
     }
   }
 
   on(eventType, callback) {
     if (eventType in this.callbacks) {
-      this.callbacks[eventType] = this.callbacks[eventType] + [callback];
+      this.callbacks[eventType].push(callback);
     } else {
       this.callbacks[eventType] = [callback];
     }

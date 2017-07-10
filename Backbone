@@ -1,0 +1,6 @@
+---
+clusters:
+  - habibots:
+      image: philcollins/habibots
+      environment:
+        SLACK_TOKEN: "{{ vault.neohabitat_slack_token }}"

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Launches all Habitat bots.
+
+set -euo pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+supervisor -w "${DIR}" -- greeter.js \
+  -g "${DIR}/assets/greeting.txt" \
+  -t rLGUstSJGUC2eW9610GfoMBx \
+  -c context-test \
+  -u neohabitat
