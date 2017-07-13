@@ -1,6 +1,8 @@
 /* jslint bitwise: true */
 /* jshint esversion: 6 */
 
+'use strict';
+
 const log = require('winston');
 const net = require('net');
 
@@ -22,7 +24,7 @@ function parseElko(s) {
 }
 
 
-class ElkoBot {
+class HabiBot {
 
   constructor(host, port) {
     this.host = host;
@@ -32,33 +34,57 @@ class ElkoBot {
 
     this.names = {};
     this.history = {};
+    this.noids = {};
 
     this.callbacks = {
       connected: [],
       disconnected: [],
+      enteredRegion: [],
       msg: [],
     };
   }
 
   addName(s) {
+    var scope = this;
     s.split("-").forEach(function(dash) {
-      this.names[dash] = s;
+      scope.names[dash] = s;
       dash.split(".").forEach(function(dot) {
-        this.names[dot] = s;
+        scope.names[dot] = s;
       });
     });
   }
 
   connect() {
+    if (this.host === undefined || this.port === undefined) {
+      log.error('No host or port specified: %s:%d', this.host. this.port);
+      return;
+    }
+
     if (!this.connected) {
+      var scope = this;
       this.server = net.connect(this.port, this.host, function() {
-        log.info('Connected to server @%s:%d', this.host, this.port);
-        for (callback in this.callbacks.connected) {
-          callback(this);
+        scope.connected = true;
+        log.info('Connected to server @%s:%d', scope.host, scope.port);
+        log.debug('Running callbacks for connect @%s:%d', scope.host, scope.port);
+        for (var i in scope.callbacks.connected) {
+          scope.callbacks.connected[i](scope);
         }
       });
-      this.server.on('data', this.processData);
-      this.server.on('end', this.onDisconnect);
+      this.server.on('data', this.processData.bind(this));
+      this.server.on('end', this.onDisconnect.bind(this));
+    }
+  }
+
+  getMod(noid) {
+    return this.getNoid(noid).mods[0];
+  }
+
+  getNoid(noid) {
+    if (noid in this.noids) {
+      return this.noids[noid];
+    } else {
+      log.error('Could not find noid: %s', noid);
+      return null;
     }
   }
 
@@ -74,8 +100,9 @@ class ElkoBot {
     log.info('Disconnected from server @%s:%d...', this.host, this.port);
     this.connected = false;
 
-    for (callback in this.callbacks.disconnected) {
-      callback(this);
+    log.debug('Running callbacks for disconnect @%s:%d', this.host, this.port);
+    for (var i in this.callbacks.disconnected) {
+      this.callbacks.disconnected[i](this);
     }
   }
 
@@ -84,6 +111,8 @@ class ElkoBot {
     var firstEOL = false;
     var JSONFrame = "";
     var blob = buf.toString();
+
+    var o = null;
     for (var i=0; i < blob.length; i++) {
       var c = blob.charCodeAt(i);
       if (framed) {
@@ -92,7 +121,7 @@ class ElkoBot {
           if (!firstEOL) {
             firstEOL = true;
           } else {
-            this.processElkoPacket(JSONFrame);
+            o = this.processElkoPacket(JSONFrame);
             framed    = false;
             firstEOL  = false;
             JSONFrame = "";
@@ -105,32 +134,34 @@ class ElkoBot {
           JSONFrame = "{";
         } else {
           if (10 !== c) {
-            log.debug("IGNORED: %s", c);         
+            log.debug('IGNORED: %s', c);         
           }
         }
       }
     }
     if (framed) { 
-      this.processElkoPacket(JSONFrame);
+      o = this.processElkoPacket(JSONFrame);
       framed    = false;
       firstEOL  = false;
-      JSONFrame = "";
+      JSONFrame = '';
     }
 
-    if (o.op in this.callbacks) {
-      for (callback in this.callbacks[o.op]) {
-        callback(this, o);
+    if (o != null) {
+      if (o.op in this.callbacks) {
+        log.debug('Running callbacks for op: %s', o.op);
+        for (var i in this.callbacks[o.op]) {
+          this.callbacks[o.op][i](this, o);
+        }
       }
-    }
-
-    for (callback in this.callbacks.msg) {
-      callback(this, o);
+      for (var i in this.callbacks.msg) {
+        this.callbacks.msg[i](this, o);
+      }
     }
   }
 
   processElkoPacket(s) {
     log.debug("<-%s:%s: %s", this.host, this.port, s.trim());
-    this.scanForRefs(s);
+    return this.scanForRefs(s);
   }
 
   scanForRefs(s) {
@@ -148,33 +179,49 @@ class ElkoBot {
       var ref = o.obj.ref;
       this.addName(ref);
       this.history[ref] = o;
+      if ("mods" in o.obj && o.obj.mods.length > 0) {
+        this.noids[o.obj.mods[0].noid] = o.obj;
+      }
       if (o.you) {
         var split = ref.split("-");
-        this.names.ME  = ref;
-        this.names.USER  = split[0] + "-" + split[1];
+        this.names.ME = ref;
+        this.names.USER = split[0] + "-" + split[1];
+        log.debug('Running callbacks for enteredRegion');
+        for (var i in this.callbacks.enteredRegion) {
+          this.callbacks.enteredRegion[i](this, o);
+        }
       }
       if (o.obj.mods[0].type === "Ghost") {
         this.names.GHOST = ref;
       }
     }
+    return o;
   }
 
   send(obj) {
-    if (!this.connected) {
-      log.error('Not connected to %s:%s, ignoring send(): %s', this.host, this.port, obj);
-      return;
-    }
+    return this.sendWithDelay(obj, 100);
+  }
 
-    if (obj.to) {
-      obj.to = this.substituteName(obj.to);
-    }
-    this.substituteState(obj);
-    if (undefined !== obj.op && "entercontext" === obj.op && undefined === obj.context) {
-      obj.context = this.firstContext;
-    }
-    var msg = JSON.stringify(obj);
-    log.debug("->%s:%s: %s", this.host, this.port, msg.trim());
-    this.server.write(msg + "\n\n");
+  sendWithDelay(obj, delayMillis) {
+    var scope = this;
+    return new Promise((resolve, reject) => {
+      if (!scope.connected) {
+        reject(`Not connected to ${scope.host}:${scope.port}`);
+        return;
+      }
+      if (obj.to) {
+        obj.to = scope.substituteName(obj.to);
+        debugger;
+      }
+      scope.substituteState(obj);
+      var msg = JSON.stringify(obj);
+      setTimeout(function() {
+        log.debug('->%s:%s: %s', scope.host, scope.port, msg.trim());
+        scope.server.write(msg + '\n\n', 'UTF8', function() {
+          resolve();
+        });
+      }, delayMillis);
+    });
   }
 
   /**
@@ -239,3 +286,5 @@ class ElkoBot {
   }
 
 }
+
+module.exports = HabiBot;

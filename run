@@ -3,10 +3,15 @@
 
 set -euo pipefail
 
+HABITAT_HOST="${HABIBOTS_HOST-127.0.0.1}"
+HABITAT_PORT="${HABIBOTS_PORT-1337}"
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-supervisor -w "${DIR}" -- greeter.js \
+node greeter.js \
   -g "${DIR}/assets/greeting.txt" \
   -t rLGUstSJGUC2eW9610GfoMBx \
   -c context-test \
-  -u neohabitat
+  -h "${HABITAT_HOST}" \
+  -p "${HABITAT_PORT}" \
+  -u pcollins
