@@ -3,4 +3,4 @@ clusters:
   - habibots:
       image: philcollins/habibots
       environment:
-        HABIBOTS_SLACK_TOKEN: "{{ vault.neohabitat_slack_token }}"
+        HABIBOTS_SLACK_TOKEN: "{{ vault.habibots_slack_token }}"

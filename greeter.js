@@ -8,7 +8,7 @@ const Defaults = {
   loglevel:     'debug',
   port:         1337,
   reconnect:    true,
-  slackChannel: '#newavatars',
+  slackChannel: 'newavatars',
   slackToken:   ''
 };
 
@@ -21,6 +21,7 @@ log.add(log.transports.Console, {'timestamp':true});
 const RtmClient = require('@slack/client').RtmClient;
 const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
+const MemoryDataStore = require('@slack/client').MemoryDataStore;
 
 const HabiBot = require('./habibot');
 
@@ -43,9 +44,13 @@ log.level = Argv.loglevel;
 
 const GreeterBot = new HabiBot(Argv.host, Argv.port);
 const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split('\n');
-const SlackEnabled = false;
-//const SlackEnabled = Argv.slackToken !== '';
-const SlackClient = new RtmClient(Argv.slackToken);
+const SlackEnabled = Argv.slackToken !== '';
+const SlackClient = new RtmClient(Argv.slackToken, {
+  logLevel: 'error', 
+  dataStore: new MemoryDataStore(),
+  autoReconnect: true,
+  autoMark: true 
+});
 
 let SlackChannelId;
 SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
@@ -55,14 +60,13 @@ SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
 });
 
 SlackClient.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(message) {
-  if (message.channel.name === Argv.slackChannel) {
-    GreeterBot.send({
-      op: 'SPEAK',
-      to: 'ME',
-      esp: 0,
-      text: `@${message.user}: ${message.text}`
-    });
-  }
+  var username = SlackClient.dataStore.getUserById(message.user).name;
+  GreeterBot.send({
+    op: 'SPEAK',
+    to: 'ME',
+    esp: 0,
+    text: `@${username}: ${message.text}`
+  });
 });
 
 GreeterBot.on('APPEARING_$', function(bot, msg) {

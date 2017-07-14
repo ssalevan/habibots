@@ -32,6 +32,9 @@ class HabiBot {
     this.port = port;
     this.server = null;
     this.connected = false;
+
+    // Ensures that only 1 Elko request is in flight at any given time.
+    // We're talking to the 80's after all...
     this.requestQueue = new Queue(1, Infinity);
 
     this.names = {};
@@ -48,9 +51,9 @@ class HabiBot {
 
   addName(s) {
     var scope = this;
-    s.split("-").forEach(function(dash) {
+    s.split('-').forEach((dash) => {
       scope.names[dash] = s;
-      dash.split(".").forEach(function(dot) {
+      dash.split('.').forEach((dot) => {
         scope.names[dot] = s;
       });
     });
@@ -64,7 +67,7 @@ class HabiBot {
 
     if (!this.connected) {
       var scope = this;
-      this.server = net.connect(this.port, this.host, function() {
+      this.server = net.connect(this.port, this.host, () => {
         scope.connected = true;
         log.info('Connected to server @%s:%d', scope.host, scope.port);
         log.debug('Running callbacks for connect @%s:%d', scope.host, scope.port);
@@ -101,7 +104,7 @@ class HabiBot {
 
   getAvatar() {
     if ('ME' in this.names) {
-      return this.history[this.names.ME];
+      return this.history[this.names.ME].obj;
     }
     return null;
   }
@@ -238,12 +241,12 @@ class HabiBot {
   }
 
   send(obj) {
-    return this.sendWithDelay(obj, 1000);
+    return this.sendWithDelay(obj, 500);
   }
 
   sendWithDelay(obj, delayMillis) {
     var scope = this;
-    return this.requestQueue.add(function() {
+    return this.requestQueue.add(() => {
       return new Promise((resolve, reject) => {
         if (!scope.connected) {
           reject(`Not connected to ${scope.host}:${scope.port}`);
@@ -254,9 +257,9 @@ class HabiBot {
         }
         scope.substituteState(obj);
         var msg = JSON.stringify(obj);
-        setTimeout(function() {
+        setTimeout(() => {
           log.debug('%s:%s->: %s', scope.host, scope.port, msg.trim());
-          scope.server.write(msg + '\n\n', 'UTF8', function() {
+          scope.server.write(msg + '\n\n', 'UTF8', () => {
             resolve();
           });
         }, delayMillis);
