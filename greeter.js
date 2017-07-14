@@ -13,7 +13,10 @@ const Defaults = {
 };
 
 const fs = require('fs');
-const log = require('winston');
+
+var log = require('winston');
+log.remove(log.transports.Console);
+log.add(log.transports.Console, {'timestamp':true});
 
 const RtmClient = require('@slack/client').RtmClient;
 const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
@@ -81,20 +84,33 @@ GreeterBot.on('APPEARING_$', function(bot, msg) {
     pose: 141
   })
     .then(function() {
-      bot.sendWithDelay({
-        op: 'OBJECTSPEAK_$',
-        type: 'private',
-        noid: avatar.mods[0].noid,
-        text: line,
-        speaker: '$ME.noid$'
-      }, 500);
+      return bot.sendWithDelay({
+        op: 'POSTURE',
+        to: 'ME',
+        pose: 146
+      }, 3000);
+    })
+    .then(function() {
+      return Promise.all(GreetingText.map(function(line) {
+        return bot.sendWithDelay({
+          op: 'SPEAK',
+          to: 'ME',
+          esp: 0,
+          text: line
+        }, 2000);
+      }));
     });
 });
 
 GreeterBot.on('SPEAK$', function(bot, msg) {
   if (SlackEnabled) {
+    // Don't echo out anything the bot itself says.
+    if (msg.noid === bot.getAvatarNoid()) {
+      return;
+    }
+
     var avatar = bot.getNoid(msg.noid);
-    if (avatar != null) {
+    if (avatar != null && avatar.name.toLowerCase() !== Argv.username.toLowerCase()) {
       SlackClient.sendMessage(`${avatar.name}: ${msg.text}`, SlackChannelId);
     }
   }
@@ -111,22 +127,29 @@ GreeterBot.on('connected', function(bot) {
 });
 
 GreeterBot.on('enteredRegion', function(bot, me) {
-  bot.send({
+  bot.sendWithDelay({
     op: 'WALK',
     to: 'ME',
     x: 84,
     y: 131,
     how: 1
-  })
+  }, 10000)
     .then(function() {
-      bot.sendWithDelay({
+      return bot.sendWithDelay({
         op: 'POSTURE',
         to: 'ME',
         pose: 141
-      }, 5000);
+      }, 10000);
     })
     .then(function() {
-      bot.send({
+      return bot.send({
+        op: 'POSTURE',
+        to: 'ME',
+        pose: 146
+      });
+    })
+    .then(function() {
+      return bot.send({
         op: 'SPEAK',
         to: 'ME',
         esp: 0,

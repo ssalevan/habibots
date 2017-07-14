@@ -6,6 +6,7 @@
 const log = require('winston');
 const net = require('net');
 
+const Queue = require('promise-queue');
 
 /**
  * JSON parse the message, handling errors.
@@ -31,6 +32,7 @@ class HabiBot {
     this.port = port;
     this.server = null;
     this.connected = false;
+    this.requestQueue = new Queue(1, Infinity);
 
     this.names = {};
     this.history = {};
@@ -73,6 +75,43 @@ class HabiBot {
       this.server.on('data', this.processData.bind(this));
       this.server.on('end', this.onDisconnect.bind(this));
     }
+  }
+
+  corporate() {
+    return this.send({
+      op: 'CORPORATE',
+      to: 'ME'
+    });
+  }
+
+  discorporate() {
+    return this.send({
+      op: 'DISCORPORATE',
+      to: 'ME'
+    });
+  }
+
+  isGhosted() {
+    var avatar = this.getAvatar();
+    if (avatar != null) {
+      return avatar.mods[0].amAGhost;
+    }
+    return false;
+  }
+
+  getAvatar() {
+    if ('ME' in this.names) {
+      return this.history[this.names.ME];
+    }
+    return null;
+  }
+
+  getAvatarNoid() {
+    var avatar = this.getAvatar();
+    if (avatar != null) {
+      return avatar.mods[0].noid;
+    }
+    return -1;
   }
 
   getMod(noid) {
@@ -199,28 +238,29 @@ class HabiBot {
   }
 
   send(obj) {
-    return this.sendWithDelay(obj, 100);
+    return this.sendWithDelay(obj, 1000);
   }
 
   sendWithDelay(obj, delayMillis) {
     var scope = this;
-    return new Promise((resolve, reject) => {
-      if (!scope.connected) {
-        reject(`Not connected to ${scope.host}:${scope.port}`);
-        return;
-      }
-      if (obj.to) {
-        obj.to = scope.substituteName(obj.to);
-        debugger;
-      }
-      scope.substituteState(obj);
-      var msg = JSON.stringify(obj);
-      setTimeout(function() {
-        log.debug('->%s:%s: %s', scope.host, scope.port, msg.trim());
-        scope.server.write(msg + '\n\n', 'UTF8', function() {
-          resolve();
-        });
-      }, delayMillis);
+    return this.requestQueue.add(function() {
+      return new Promise((resolve, reject) => {
+        if (!scope.connected) {
+          reject(`Not connected to ${scope.host}:${scope.port}`);
+          return;
+        }
+        if (obj.to) {
+          obj.to = scope.substituteName(obj.to);
+        }
+        scope.substituteState(obj);
+        var msg = JSON.stringify(obj);
+        setTimeout(function() {
+          log.debug('%s:%s->: %s', scope.host, scope.port, msg.trim());
+          scope.server.write(msg + '\n\n', 'UTF8', function() {
+            resolve();
+          });
+        }, delayMillis);
+      });
     });
   }
 

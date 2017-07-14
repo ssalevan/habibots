@@ -14,7 +14,6 @@ RUN yum -y install \
   git \
   htop \
   make \
-  mariadb \
   tar \
   vim \
   wget \
@@ -22,7 +21,7 @@ RUN yum -y install \
   yum clean all
 
 # Installs the Nodesource Yum repository.
-RUN curl -sL https://rpm.nodesource.com/setup_6.x | bash -
+RUN curl -sL https://rpm.nodesource.com/setup_7.x | bash -
 
 # Installs Node.
 RUN yum -y install \

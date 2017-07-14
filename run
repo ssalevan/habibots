@@ -5,12 +5,13 @@ set -euo pipefail
 
 HABITAT_HOST="${HABIBOTS_HOST-127.0.0.1}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
+SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-rLGUstSJGUC2eW9610GfoMBx}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-node greeter.js \
+supervisor -w "${DIR}" -- greeter.js \
   -g "${DIR}/assets/greeting.txt" \
-  -t rLGUstSJGUC2eW9610GfoMBx \
+  -t "${SLACK_TOKEN}" \
   -c context-test \
   -h "${HABITAT_HOST}" \
   -p "${HABITAT_PORT}" \
