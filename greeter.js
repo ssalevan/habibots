@@ -59,7 +59,7 @@ SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   }
 });
 
-SlackClient.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(message) {
+SlackClient.on(RTM_EVENTS.MESSAGE, (message) => {
   var username = SlackClient.dataStore.getUserById(message.user).name;
   GreeterBot.send({
     op: 'SPEAK',
@@ -69,7 +69,7 @@ SlackClient.on(RTM_EVENTS.MESSAGE, function handleRtmMessage(message) {
   });
 });
 
-GreeterBot.on('APPEARING_$', function(bot, msg) {
+GreeterBot.on('APPEARING_$', (bot, msg) => {
   var avatar = bot.getNoid(msg.appearing);
   if (avatar == null) {
     log.error('No avatar found at noid: %s', msg.appearing);
@@ -87,15 +87,15 @@ GreeterBot.on('APPEARING_$', function(bot, msg) {
     to: 'ME',
     pose: 141
   })
-    .then(function() {
+    .then(() => {
       return bot.sendWithDelay({
         op: 'POSTURE',
         to: 'ME',
         pose: 146
       }, 3000);
     })
-    .then(function() {
-      return Promise.all(GreetingText.map(function(line) {
+    .then(() => {
+      return Promise.all(GreetingText.map((line) => {
         return bot.sendWithDelay({
           op: 'SPEAK',
           to: 'ME',
@@ -106,7 +106,7 @@ GreeterBot.on('APPEARING_$', function(bot, msg) {
     });
 });
 
-GreeterBot.on('SPEAK$', function(bot, msg) {
+GreeterBot.on('SPEAK$', (bot, msg) => {
   if (SlackEnabled) {
     // Don't echo out anything the bot itself says.
     if (msg.noid === bot.getAvatarNoid()) {
@@ -120,7 +120,7 @@ GreeterBot.on('SPEAK$', function(bot, msg) {
   }
 });
 
-GreeterBot.on('connected', function(bot) {
+GreeterBot.on('connected', (bot) => {
   log.debug('GreeterBot connected.');
   bot.send({
     op: 'entercontext',
@@ -130,7 +130,7 @@ GreeterBot.on('connected', function(bot) {
   })
 });
 
-GreeterBot.on('enteredRegion', function(bot, me) {
+GreeterBot.on('enteredRegion', (bot, me) => {
   bot.sendWithDelay({
     op: 'WALK',
     to: 'ME',
@@ -138,21 +138,21 @@ GreeterBot.on('enteredRegion', function(bot, me) {
     y: 131,
     how: 1
   }, 10000)
-    .then(function() {
+    .then(() => {
       return bot.sendWithDelay({
         op: 'POSTURE',
         to: 'ME',
         pose: 141
       }, 10000);
     })
-    .then(function() {
+    .then(() => {
       return bot.send({
         op: 'POSTURE',
         to: 'ME',
         pose: 146
       });
     })
-    .then(function() {
+    .then(() => {
       return bot.send({
         op: 'SPEAK',
         to: 'ME',
@@ -169,7 +169,7 @@ if (SlackEnabled) {
 }
 
 if (Argv.reconnect) {
-  GreeterBot.on('disconnected', function(bot) {
+  GreeterBot.on('disconnected', (bot) => {
     bot.connect();
   });
 }

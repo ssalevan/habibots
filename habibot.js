@@ -123,6 +123,7 @@ class HabiBot {
 
   getNoid(noid) {
     if (noid in this.noids) {
+      log.debug('Object at noid %d: %j', noid, this.noids[noid]);
       return this.noids[noid];
     } else {
       log.error('Could not find noid: %s', noid);

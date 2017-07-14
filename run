@@ -1,17 +1,17 @@
 #!/bin/bash
 # Launches all Habitat bots.
 
-set -euo pipefail
+set -eo pipefail
 
 HABITAT_HOST="${HABIBOTS_HOST-127.0.0.1}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
-SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-rLGUstSJGUC2eW9610GfoMBx}"
+SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-xoxb-212765686899-B5qIKzJRXzNeiAuZSWAWCFQa}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 supervisor -w "${DIR}" -- greeter.js \
   -g "${DIR}/assets/greeting.txt" \
-  -t "${SLACK_TOKEN}" \
+  -s "${SLACK_TOKEN}" \
   -c context-test \
   -h "${HABITAT_HOST}" \
   -p "${HABITAT_PORT}" \
