@@ -4,3 +4,6 @@ clusters:
       image: philcollins/habibots
       environment:
         HABIBOTS_SLACK_TOKEN: "{{ vault.habibots_slack_token }}"
+      synapses:
+        - resource: neohabitat
+          port: 1337

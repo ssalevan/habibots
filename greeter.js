@@ -23,6 +23,7 @@ const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 const MemoryDataStore = require('@slack/client').MemoryDataStore;
 
+const constants = require('./constants');
 const HabiBot = require('./habibot');
 
 const Argv = require('yargs')
@@ -42,7 +43,7 @@ const Argv = require('yargs')
 
 log.level = Argv.loglevel;
 
-const GreeterBot = new HabiBot(Argv.host, Argv.port);
+const GreeterBot = HabiBot.newWithConfig(Argv.host, Argv.port, {shouldReconnect: true});
 const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split('\n');
 const SlackEnabled = Argv.slackToken !== '';
 const SlackClient = new RtmClient(Argv.slackToken, {
@@ -78,21 +79,19 @@ GreeterBot.on('APPEARING_$', (bot, msg) => {
 
   // Announces new user to Slack.
   if (SlackEnabled) {
-    SlackClient.sendMessage(`New user arrived: ${avatar.name}`, SlackChannelId);
+    SlackClient.sendMessage(`New Avatar arrived: ${avatar.name}`, SlackChannelId);
   }
 
-  // Waves to new Avatar.
-  bot.send({
-    op: 'POSTURE',
-    to: 'ME',
-    pose: 141
-  })
+  // Faces the Avatar, waves to them, faces forward again, and says the greeting text.
+  bot.faceDirection(bot.getDirection(avatar))
     .then(() => {
-      return bot.sendWithDelay({
-        op: 'POSTURE',
-        to: 'ME',
-        pose: 146
-      }, 3000);
+      return bot.doPosture(constants.WAVE);
+    })
+    .then(() => {
+      return bot.wait(2000);
+    })
+    .then(() => {
+      return bot.faceDirection(constants.FORWARD);
     })
     .then(() => {
       return Promise.all(GreetingText.map((line) => {
@@ -131,26 +130,30 @@ GreeterBot.on('connected', (bot) => {
 });
 
 GreeterBot.on('enteredRegion', (bot, me) => {
-  bot.sendWithDelay({
-    op: 'WALK',
-    to: 'ME',
-    x: 84,
-    y: 131,
-    how: 1
-  }, 10000)
+  bot.ensureCorporated()
     .then(() => {
       return bot.sendWithDelay({
-        op: 'POSTURE',
+        op: 'WALK',
         to: 'ME',
-        pose: 141
-      }, 10000);
+        x: 84,
+        y: 131,
+        how: 1
+      }, 5000);
     })
     .then(() => {
-      return bot.send({
-        op: 'POSTURE',
-        to: 'ME',
-        pose: 146
-      });
+      return bot.wait(10000);
+    })
+    .then(() => {
+      return bot.faceDirection(constants.LEFT);
+    })
+    .then(() => {
+      return bot.doPosture(constants.WAVE);
+    })
+    .then(() => {
+      return bot.wait(2000);
+    })
+    .then(() => {
+      return bot.faceDirection(constants.FORWARD);
     })
     .then(() => {
       return bot.send({
@@ -166,10 +169,4 @@ GreeterBot.connect();
 
 if (SlackEnabled) {
   SlackClient.start();
-}
-
-if (Argv.reconnect) {
-  GreeterBot.on('disconnected', (bot) => {
-    bot.connect();
-  });
 }

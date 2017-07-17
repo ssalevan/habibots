@@ -8,6 +8,27 @@ const net = require('net');
 
 const Queue = require('promise-queue');
 
+const constants = require('./constants');
+const util = require('./util');
+
+const DirectionToPoseId = {
+  LEFT:    254,
+  RIGHT:   255,
+  FORWARD: 146,
+  BEHIND:  143,
+};
+
+const AvatarPostures = {
+  WAVE:        141,
+  POINT:       136,
+  EXTEND_HAND: 148,
+  JUMP:        139,
+  BEND_OVER:   134,
+  STAND_UP:    135,
+  PUNCH:       140,
+  FROWN:       142,
+}
+
 /**
  * JSON parse the message, handling errors.
  * 
@@ -24,6 +45,9 @@ function parseElko(s) {
   return o;
 }
 
+const DefaultHabiBotConfig = {
+  shouldReconnect: true,
+};
 
 class HabiBot {
 
@@ -37,6 +61,8 @@ class HabiBot {
     // We're talking to the 80's after all...
     this.requestQueue = new Queue(1, Infinity);
 
+    this.config = util.clone(DefaultHabiBotConfig);
+
     this.names = {};
     this.history = {};
     this.noids = {};
@@ -47,6 +73,14 @@ class HabiBot {
       enteredRegion: [],
       msg: [],
     };
+
+    log.debug('Constructed HabiBot @%s:%d: %j', this.host, this.port, this.config);
+  }
+
+  static newWithConfig(host, port, config) {
+    var bot = new HabiBot(host, port);
+    Object.assign(bot.config, config);
+    return bot;
   }
 
   addName(s) {
@@ -81,17 +115,76 @@ class HabiBot {
   }
 
   corporate() {
-    return this.send({
+    var scope = this;
+    if (!this.isGhosted()) {
+      return Promise.resolve();
+    }
+    return scope.send({
       op: 'CORPORATE',
-      to: 'ME'
-    });
+      to: 'GHOST',
+    })
+      .then(() => {
+        // Hardwaits 10 seconds for all C64 clients to load imagery.
+        return scope.wait(10000);
+      });
   }
 
   discorporate() {
     return this.send({
       op: 'DISCORPORATE',
-      to: 'ME'
+      to: 'ME',
     });
+  }
+
+  doPosture(posture) {
+    var postureUpper = posture.toUpperCase();
+    if (postureUpper in AvatarPostures) {
+      return this.send({
+        op:   'POSTURE',
+        to:   'ME',
+        pose: AvatarPostures[postureUpper],
+      });
+    }
+    return Promise.reject(`Invalid posture: ${posture}`);
+  }
+
+  ensureCorporated() {
+    return this.tryEnsureCorporated(0);
+  }
+
+  faceDirection(direction) {
+    var directionUpper = direction.toUpperCase();
+    if (directionUpper in DirectionToPoseId) {
+      return this.send({
+        op:   'POSTURE',
+        to:   'ME',
+        pose: DirectionToPoseId[directionUpper],
+      });
+    }
+    return Promise.reject(`Invalid direction: ${direction}`);
+  }
+
+  tryEnsureCorporated(curTry) {
+    var scope = this;
+    if (scope.isGhosted()) {
+      // If the Avatar is in ghost form but their Ghost object has not yet
+      // come down the wire, retries every 2 seconds 5 times.
+      if (!('GHOST' in scope.names)) {
+        return new Promise((resolve, reject) => {
+          if (curTry < 5) {
+            setTimeout(() => {
+              scope.ensureCorporated(curTry + 1)
+                .then(() => { resolve(); })
+                .catch((reason) => { reject(reason); });
+            }, 2000);
+          } else {
+            reject('Could not ensure corporation after 5 tries.');
+          }
+        });
+      }
+      return this.corporate();
+    }
+    return Promise.resolve();
   }
 
   isGhosted() {
@@ -115,6 +208,32 @@ class HabiBot {
       return avatar.mods[0].noid;
     }
     return -1;
+  }
+
+  getDirection(obj) {
+    var myAvatar = this.getAvatar();
+    if (myAvatar != null && 
+        obj != null &&
+        'mods' in obj &&
+        obj.mods.length > 0) {
+      var avatarMod = myAvatar.mods[0];
+      var mod = obj.mods[0];
+      if ('x' in mod) {
+        if (mod.x > avatarMod.x) {
+          return constants.LEFT;
+        } else if (mod.x == avatarMod.x) {
+          return constants.FORWARD;
+        } else {
+          return constants.RIGHT;
+        }
+      }
+      return constants.UNKNOWN;
+    }
+    return constants.UNKNOWN;
+  }
+
+  getDirectionOfNoid(noid) {
+    return this.getDirection(this.getNoid(noid));
   }
 
   getMod(noid) {
@@ -146,6 +265,10 @@ class HabiBot {
     log.debug('Running callbacks for disconnect @%s:%d', this.host, this.port);
     for (var i in this.callbacks.disconnected) {
       this.callbacks.disconnected[i](this);
+    }
+
+    if (this.config.shouldReconnect) {
+      this.connect();
     }
   }
 
@@ -208,34 +331,39 @@ class HabiBot {
   }
 
   scanForRefs(s) {
+    var scope = this;
     var o = parseElko(s);
+    
     if (o.to) {
-      this.addName(o.to);
+      scope.addName(o.to);
     }
     if (!o.op) {
       return;
     }
-    if (o.op === "HEREIS_$") {
-      o.obj = o.object; // HEREIS does not use the same params as make. TODO fix one day.
+
+    // HEREIS does not use the same params as make. TODO fix one day.
+    if (o.op === 'HEREIS_$') {
+      o.obj = o.object;
     }
-    if (o.op === "make" || o.op == "HEREIS_$") {
+
+    if (o.op === 'make' || o.op == 'HEREIS_$') {
       var ref = o.obj.ref;
-      this.addName(ref);
-      this.history[ref] = o;
-      if ("mods" in o.obj && o.obj.mods.length > 0) {
-        this.noids[o.obj.mods[0].noid] = o.obj;
+      scope.addName(ref);
+      scope.history[ref] = o;
+      if ('mods' in o.obj && o.obj.mods.length > 0) {
+        scope.noids[o.obj.mods[0].noid] = o.obj;
       }
       if (o.you) {
-        var split = ref.split("-");
-        this.names.ME = ref;
-        this.names.USER = split[0] + "-" + split[1];
+        var split = ref.split('-');
+        scope.names.ME = ref;
+        scope.names.USER = `${split[0]}-${split[1]}`;
         log.debug('Running callbacks for enteredRegion');
-        for (var i in this.callbacks.enteredRegion) {
-          this.callbacks.enteredRegion[i](this, o);
-        }
+        scope.callbacks.enteredRegion.forEach((callback) => {
+          callback(scope, o);
+        });
       }
       if (o.obj.mods[0].type === "Ghost") {
-        this.names.GHOST = ref;
+        scope.names.GHOST = ref;
       }
     }
     return o;
@@ -300,7 +428,8 @@ class HabiBot {
               var varseg = keys[j];
               if (first) {
                 value = this.history[this.substituteName(varseg)];
-                if (undefined === value) {  // No matching object, so substitute the key's value
+                if (undefined === value) {
+                  // No matching object, so substitute the key's value.
                   value = this.names[varseg] || chunks[i];
                   break;
                 }
@@ -320,13 +449,25 @@ class HabiBot {
             chunks[i] = value;
           }
           if (chunks.length === 2 && chunks[0] === "") {
-            m[name] = chunks[1];    // This preserves integer types, which have no leading chars
+            // This preserves integer types, which have no leading chars.
+            m[name] = chunks[1];
           } else {
-            m[name] = chunks.join("");  // For in-string substitutions. 
+            // For in-string substitutions. 
+            m[name] = chunks.join("");
           }
         }
       }
     }
+  }
+
+  wait(millis) {
+    var scope = this;
+    return new Promise((resolve, reject) => {
+      log.debug('Bot @%s:%d waiting %d milliseconds', scope.host, scope.port, millis);
+      setTimeout(() => {
+        resolve();
+      }, millis);
+    });
   }
 
 }
