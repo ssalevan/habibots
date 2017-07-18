@@ -16,7 +16,7 @@ const fs = require('fs');
 
 var log = require('winston');
 log.remove(log.transports.Console);
-log.add(log.transports.Console, {'timestamp':true});
+log.add(log.transports.Console, { 'timestamp': true });
 
 const RtmClient = require('@slack/client').RtmClient;
 const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
@@ -43,8 +43,9 @@ const Argv = require('yargs')
 
 log.level = Argv.loglevel;
 
-const GreeterBot = HabiBot.newWithConfig(Argv.host, Argv.port, {shouldReconnect: true});
+const GreeterBot = HabiBot.newWithConfig(Argv.host, Argv.port, Argv.username);
 const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split('\n');
+
 const SlackEnabled = Argv.slackToken !== '';
 const SlackClient = new RtmClient(Argv.slackToken, {
   logLevel: 'error', 
@@ -52,6 +53,7 @@ const SlackClient = new RtmClient(Argv.slackToken, {
   autoReconnect: true,
   autoMark: true 
 });
+
 
 let SlackChannelId;
 SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
@@ -62,13 +64,9 @@ SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
 
 SlackClient.on(RTM_EVENTS.MESSAGE, (message) => {
   var username = SlackClient.dataStore.getUserById(message.user).name;
-  GreeterBot.send({
-    op: 'SPEAK',
-    to: 'ME',
-    esp: 0,
-    text: `@${username}: ${message.text}`
-  });
+  GreeterBot.say(`@${username}: ${message.text}`);
 });
+
 
 GreeterBot.on('APPEARING_$', (bot, msg) => {
   var avatar = bot.getNoid(msg.appearing);
@@ -86,9 +84,6 @@ GreeterBot.on('APPEARING_$', (bot, msg) => {
   bot.faceDirection(bot.getDirection(avatar))
     .then(() => {
       return bot.doPosture(constants.WAVE);
-    })
-    .then(() => {
-      return bot.wait(2000);
     })
     .then(() => {
       return bot.faceDirection(constants.FORWARD);
@@ -113,35 +108,23 @@ GreeterBot.on('SPEAK$', (bot, msg) => {
     }
 
     var avatar = bot.getNoid(msg.noid);
-    if (avatar != null && avatar.name.toLowerCase() !== Argv.username.toLowerCase()) {
+    if (avatar != null) {
       SlackClient.sendMessage(`${avatar.name}: ${msg.text}`, SlackChannelId);
     }
   }
 });
 
+
 GreeterBot.on('connected', (bot) => {
   log.debug('GreeterBot connected.');
-  bot.send({
-    op: 'entercontext',
-    to: 'session',
-    context: Argv.context,
-    user: 'user-' + Argv.username
-  })
+  bot.gotoContext(Argv.context);
 });
+
 
 GreeterBot.on('enteredRegion', (bot, me) => {
   bot.ensureCorporated()
     .then(() => {
-      return bot.sendWithDelay({
-        op: 'WALK',
-        to: 'ME',
-        x: 84,
-        y: 131,
-        how: 1
-      }, 5000);
-    })
-    .then(() => {
-      return bot.wait(10000);
+      return bot.walkTo(84, 131);
     })
     .then(() => {
       return bot.faceDirection(constants.LEFT);
@@ -150,18 +133,10 @@ GreeterBot.on('enteredRegion', (bot, me) => {
       return bot.doPosture(constants.WAVE);
     })
     .then(() => {
-      return bot.wait(2000);
-    })
-    .then(() => {
       return bot.faceDirection(constants.FORWARD);
     })
     .then(() => {
-      return bot.send({
-        op: 'SPEAK',
-        to: 'ME',
-        esp: 0,
-        text: "Hey there! I'm Phil, the greeting bot!"
-      });
+      return bot.say("Hey there! I'm Phil, the greeting bot!");
     });
 });
 

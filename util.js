@@ -3,9 +3,15 @@
 
 'use strict';
 
+const log = require('winston');
 
-// Borrowed from:
-// https://stackoverflow.com/posts/728694/revisions
+
+/**
+ * Clones a JavaScript Object, borrowed from:
+ * https://stackoverflow.com/posts/728694/revisions
+ * @param {Object} Object to clone
+ * @returns {Object} Cloned object
+ */
 function clone(obj) {
   var copy;
 
@@ -41,6 +47,24 @@ function clone(obj) {
 }
 
 
-module.exports = {
+/**
+ * JSON parses an Elko message, handling errors.
+ * 
+ * @param String s
+ * @returns Object The JSON object from the message or {}
+ */
+function parseElko(s) {
+  var o = {};
+  try {
+    o = JSON.parse(s);
+  } catch (e) {
+    log.warn("Unable to parse: " + s + "\n\n" + JSON.stringify(e, null, 2));
+  }
+  return o;
+}
+
+
+module.exports = Object.freeze({
   clone: clone,
-};
+  parseElko: parseElko,
+});
