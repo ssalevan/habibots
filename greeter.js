@@ -8,6 +8,7 @@ const Defaults = {
   loglevel:     'debug',
   port:         1337,
   reconnect:    true,
+  echoChat:     false,
   slackChannel: 'newavatars',
   slackToken:   ''
 };
@@ -39,6 +40,7 @@ const Argv = require('yargs')
   .option('slackToken', { alias: 's', default: Defaults.slackToken, describe: 'Token for sending user notifications to Slack.' })
   .option('slackChannel', { alias: 'l', default: Defaults.slackChannel, describe: 'Default Slack channel to use for notifications.' })
   .option('username', { alias: 'u', describe: 'Username of this bot.' })
+  .option('echoChat', { alias: 'e', default: Defaults.echoChat, describe: 'Whether to echo in-world chat to Slack.' })
   .argv;
 
 log.level = Argv.loglevel;
@@ -58,13 +60,10 @@ const SlackClient = new RtmClient(Argv.slackToken, {
 let SlackChannelId;
 SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   for (const c of rtmStartData.channels) {
-    if (c.is_member && c.name === Argv.slackChannel) { SlackChannelId = c.id }
+    if (c.name === Argv.slackChannel) {
+      SlackChannelId = c.id 
+    }
   }
-});
-
-SlackClient.on(RTM_EVENTS.MESSAGE, (message) => {
-  var username = SlackClient.dataStore.getUserById(message.user).name;
-  GreeterBot.say(`@${username}: ${message.text}`);
 });
 
 
@@ -82,36 +81,9 @@ GreeterBot.on('APPEARING_$', (bot, msg) => {
 
   // Faces the Avatar, waves to them, faces forward again, and says the greeting text.
   bot.faceDirection(bot.getDirection(avatar))
-    .then(() => {
-      return bot.doPosture(constants.WAVE);
-    })
-    .then(() => {
-      return bot.faceDirection(constants.FORWARD);
-    })
-    .then(() => {
-      return Promise.all(GreetingText.map((line) => {
-        return bot.sendWithDelay({
-          op: 'SPEAK',
-          to: 'ME',
-          esp: 0,
-          text: line
-        }, 2000);
-      }));
-    });
-});
-
-GreeterBot.on('SPEAK$', (bot, msg) => {
-  if (SlackEnabled) {
-    // Don't echo out anything the bot itself says.
-    if (msg.noid === bot.getAvatarNoid()) {
-      return;
-    }
-
-    var avatar = bot.getNoid(msg.noid);
-    if (avatar != null) {
-      SlackClient.sendMessage(`${avatar.name}: ${msg.text}`, SlackChannelId);
-    }
-  }
+    .then(() => bot.doPosture(constants.WAVE))
+    .then(() => bot.faceDirection(constants.FORWARD))
+    .then(() => bot.sayLines(GreetingText))
 });
 
 
@@ -123,24 +95,40 @@ GreeterBot.on('connected', (bot) => {
 
 GreeterBot.on('enteredRegion', (bot, me) => {
   bot.ensureCorporated()
-    .then(() => {
-      return bot.walkTo(84, 131);
-    })
-    .then(() => {
-      return bot.faceDirection(constants.LEFT);
-    })
-    .then(() => {
-      return bot.doPosture(constants.WAVE);
-    })
-    .then(() => {
-      return bot.faceDirection(constants.FORWARD);
-    })
-    .then(() => {
-      return bot.say("Hey there! I'm Phil, the greeting bot!");
-    });
+    .then(() => bot.walkTo(84, 131))
+    .then(() => bot.faceDirection(constants.LEFT))
+    .then(() => bot.doPosture(constants.WAVE))
+    .then(() => bot.faceDirection(constants.FORWARD))
+    .then(() => bot.say("Hey there! I'm Phil, the greeting bot!"))
+    .then(() => SlackClient.sendMessage("GreeterBot engaged.", SlackChannelId))
 });
 
+
+// Installs Slack-to-Habitat chat bridging handlers if echo mode is enabled.
+if (SlackEnabled && Argv.echoChat) {
+  GreeterBot.on('SPEAK$', (bot, msg) => {
+    // Don't echo out anything the bot itself says.
+    if (msg.noid === bot.getAvatarNoid()) {
+      return;
+    }
+
+    var avatar = bot.getNoid(msg.noid);
+    if (avatar != null) {
+      SlackClient.sendMessage(`${avatar.name}: ${msg.text}`, SlackChannelId);
+    }
+  });
+
+  SlackClient.on(RTM_EVENTS.MESSAGE, (message) => {
+    var username = SlackClient.dataStore.getUserById(message.user).name;
+    GreeterBot.say(`@${username}: ${message.text}`);
+  });
+
+  log.debug('Slack chat echo enabled.')
+}
+
+
 GreeterBot.connect();
+
 
 if (SlackEnabled) {
   SlackClient.start();

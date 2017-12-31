@@ -74,24 +74,24 @@ class HabiBot {
    * Connects this HabiBot to the Neohabitat server if it is not yet connected.
    */
   connect() {
+    var self = this;
     if (this.host === undefined || this.port === undefined) {
       log.error('No host or port specified: %s:%d', this.host. this.port);
       return;
     }
 
     if (!this.connected) {
-      var scope = this;
-      scope.clearState();
+      self.clearState();
       this.server = net.connect(this.port, this.host, () => {
-        scope.connected = true;
-        log.info('Connected to server @%s:%d', scope.host, scope.port);
-        log.debug('Running callbacks for connect @%s:%d', scope.host, scope.port);
-        for (var i in scope.callbacks.connected) {
-          scope.callbacks.connected[i](scope);
+        self.connected = true;
+        log.info('Connected to server @%s:%d', self.host, self.port);
+        log.debug('Running callbacks for connect @%s:%d', self.host, self.port);
+        for (var i in self.callbacks.connected) {
+          self.callbacks.connected[i](self);
         }
       });
-      this.server.on('data', this.processData.bind(this));
-      this.server.on('end', this.onDisconnect.bind(this));
+      self.server.on('data', self.processData.bind(self));
+      self.server.on('end', self.onDisconnect.bind(self));
     }
   }
 
@@ -100,17 +100,17 @@ class HabiBot {
    * @returns {Promise}
    */
   corporate() {
-    var scope = this;
-    if (!this.isGhosted()) {
+    var self = this;
+    if (!self.isGhosted()) {
       return Promise.resolve();
     }
-    return scope.send({
+    return self.send({
       op: 'CORPORATE',
       to: 'GHOST',
     })
       .then(() => {
         // Hardwaits 10 seconds for all C64 clients to load imagery.
-        return scope.wait(10000);
+        return self.wait(10000);
       });
   }
 
@@ -132,16 +132,16 @@ class HabiBot {
    * @returns {Promise}
    */
   doPosture(posture) {
-    var scope = this;
+    var self = this;
     var postureUpper = posture.toUpperCase();
     if (postureUpper in AvatarPostures) {
       log.debug('Bot @%s:%d running posture animation: %s',
-          scope.host, scope.port, postureUpper);
-      return scope.send({
+          self.host, self.port, postureUpper);
+      return self.send({
         op:   'POSTURE',
         to:   'ME',
         pose: AvatarPostures[postureUpper],
-      }).then(() => { scope.wait(2000) });
+      }).then(() => { self.wait(2000) });
     }
     return Promise.reject(`Invalid posture: ${posture}`);
   }
@@ -313,7 +313,7 @@ class HabiBot {
    * </pre>
    *
    * <b>Please note</b>, the <tt>connected</tt> and <tt>disconnected</tt> callbacks take
-   * only one callback:
+   * only one argument:
    *
    * <pre>
    * const HabiBot = require('habibot');
@@ -335,7 +335,7 @@ class HabiBot {
   }
 
   /**
-   * Speaks the provided text within the HabiBot's current region.
+   * Speaks the provided text line within the HabiBot's current region.
    * @param {string} text text to speak
    * @return {Promise}
    */
@@ -349,6 +349,24 @@ class HabiBot {
   }
 
   /**
+   * Speaks each line provided within an array of Strings within the HabiBot's
+   * current region, pausing for 2 seconds between each.
+   * @param {array} textLines text lines to speak
+   * @return {Promise}
+   */
+  sayLines(textLines) {
+    var self = this;
+    return Promise.all(textLines.map((line) => {
+      return self.sendWithDelay({
+        op: 'SPEAK',
+        to: 'ME',
+        esp: 0,
+        text: line
+      }, 2000);
+    }));
+  }
+
+  /**
    * Sends the provided Elko message to the Neohabitat server.
    * @param {Object} obj Elko message to send
    * @returns {Promise}
@@ -357,22 +375,29 @@ class HabiBot {
     return this.sendWithDelay(obj, 500);
   }
 
+  /**
+   * Sends the provided Elko message to the Neohabitat server after the provided number
+   * of delay milliseconds.
+   * @param {Object} obj Elko message to send
+   * @param {int} delayMillis number of milliseconds to delay by
+   * @returns {Promise}
+   */
   sendWithDelay(obj, delayMillis) {
-    var scope = this;
-    return this.actionQueue.add(() => {
+    var self = this;
+    return self.actionQueue.add(() => {
       return new Promise((resolve, reject) => {
-        if (!scope.connected) {
-          reject(`Not connected to ${scope.host}:${scope.port}`);
+        if (!self.connected) {
+          reject(`Not connected to ${self.host}:${self.port}`);
           return;
         }
         if (obj.to) {
-          obj.to = scope.substituteName(obj.to);
+          obj.to = self.substituteName(obj.to);
         }
-        scope.substituteState(obj);
+        self.substituteState(obj);
         var msg = JSON.stringify(obj);
         setTimeout(() => {
-          log.debug('%s:%s->: %s', scope.host, scope.port, msg.trim());
-          scope.server.write(msg + '\n\n', 'UTF8', () => {
+          log.debug('%s:%s->: %s', self.host, self.port, msg.trim());
+          self.server.write(msg + '\n\n', 'UTF8', () => {
             resolve();
           });
         }, delayMillis);
@@ -386,10 +411,10 @@ class HabiBot {
    * @returns {Promise} promise to be resolved after waiting
    */
   wait(millis) {
-    var scope = this;
+    var self = this;
     return this.actionQueue.add(() => {
       return new Promise((resolve, reject) => {
-        log.debug('Bot @%s:%d waiting %d milliseconds', scope.host, scope.port, millis);
+        log.debug('Bot @%s:%d waiting %d milliseconds', self.host, self.port, millis);
         setTimeout(() => {
           resolve();
         }, millis);
@@ -420,11 +445,11 @@ class HabiBot {
    * shorthand reference.
    */
   addNames(s) {
-    var scope = this;
+    var self = this;
     s.split('-').forEach((dash) => {
-      scope.names[dash] = s;
+      self.names[dash] = s;
       dash.split('.').forEach((dot) => {
-        scope.names[dot] = s;
+        self.names[dot] = s;
       });
     });
   }
@@ -433,11 +458,11 @@ class HabiBot {
    * Clears all shorthand references to an Elko object.
    */
   clearNames(s) {
-    var scope = this;
+    var self = this;
     s.split('-').forEach((dash) => {
-      delete scope.names[dash];
+      delete self.names[dash];
       dash.split('.').forEach((dot) => {
-        delete scope.names[dot];
+        delete self.names[dot];
       });
     });
   }
@@ -535,11 +560,11 @@ class HabiBot {
   }
 
   scanForRefs(s) {
-    var scope = this;
+    var self = this;
     var o = util.parseElko(s);
     
     if (o.to) {
-      scope.addNames(o.to);
+      self.addNames(o.to);
     }
     if (!o.op) {
       return;
@@ -552,25 +577,25 @@ class HabiBot {
 
     if (o.op === 'make' || o.op == 'HEREIS_$') {
       var ref = o.obj.ref;
-      scope.addNames(ref);
-      scope.history[ref] = o;
+      self.addNames(ref);
+      self.history[ref] = o;
       if ('mods' in o.obj && o.obj.mods.length > 0) {
-        scope.noids[o.obj.mods[0].noid] = o.obj;
+        self.noids[o.obj.mods[0].noid] = o.obj;
       }
       if (o.you) {
         var split = ref.split('-');
-        scope.names.ME = ref;
-        scope.names.USER = `${split[0]}-${split[1]}`;
+        self.names.ME = ref;
+        self.names.USER = `${split[0]}-${split[1]}`;
         log.debug('Running callbacks for enteredRegion');
-        scope.callbacks.enteredRegion.forEach((callback) => {
-          callback(scope, o);
+        self.callbacks.enteredRegion.forEach((callback) => {
+          callback(self, o);
         });
       }
       if (o.obj.mods[0].type === 'Ghost') {
-        scope.names.GHOST = ref;
+        self.names.GHOST = ref;
       }
       if (o.obj.mods[0].type === 'Avatar') {
-        scope.avatars[o.obj.name] = o.obj;
+        self.avatars[o.obj.name] = o.obj;
       }
     }
     return o;
@@ -641,15 +666,15 @@ class HabiBot {
   }
 
   tryEnsureCorporated(curTry) {
-    var scope = this;
-    if (scope.isGhosted()) {
+    var self = this;
+    if (self.isGhosted()) {
       // If the Avatar is in ghost form but their Ghost object has not yet
-      // come down the wire, retries every 2 seconds 5 times.
-      if (!('GHOST' in scope.names)) {
+      // come down the wire, retries up to 5 times, every 2 seconds.
+      if (!('GHOST' in self.names)) {
         return new Promise((resolve, reject) => {
           if (curTry < 5) {
             setTimeout(() => {
-              scope.ensureCorporated(curTry + 1)
+              self.ensureCorporated(curTry + 1)
                 .then(() => { resolve(); })
                 .catch((reason) => { reject(reason); });
             }, 2000);

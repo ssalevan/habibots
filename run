@@ -3,17 +3,17 @@
 
 set -eo pipefail
 
-HABITAT_HOST="${HABIBOTS_HOST-neohabitat.demo.spi.ne}"
+HABITAT_HOST="${HABIBOTS_HOST-app.neohabitat.org}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
-SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-xoxb-212765686899-B5qIKzJRXzNeiAuZSWAWCFQa}"
-GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-Downtown_3b}"
+GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-welcomecenterinthatch}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 supervisor -w "${DIR}" -- greeter.js \
   -g "${DIR}/assets/greeting.txt" \
-  -s "${SLACK_TOKEN}" \
+  -s "${HABIBOTS_SLACK_TOKEN}" \
   -c "${GREETER1_REGION}" \
   -h "${HABITAT_HOST}" \
   -p "${HABITAT_PORT}" \
-  -u pcollins
+  -l "newavatars" \
+  -u phil
