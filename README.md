@@ -19,4 +19,4 @@ npm install habibots --save
 Writing a Habibot
 -----------------
 
-A Habibot 
+A Habibot  
