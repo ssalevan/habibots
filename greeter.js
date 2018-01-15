@@ -95,7 +95,7 @@ GreeterBot.on('connected', (bot) => {
 
 GreeterBot.on('enteredRegion', (bot, me) => {
   bot.ensureCorporated()
-    .then(() => bot.walkTo(84, 131))
+    .then(() => bot.walkTo(84, 131, 1))
     .then(() => bot.faceDirection(constants.LEFT))
     .then(() => bot.doPosture(constants.WAVE))
     .then(() => bot.faceDirection(constants.FORWARD))

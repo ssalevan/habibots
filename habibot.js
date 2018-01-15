@@ -125,6 +125,13 @@ class HabiBot {
       to: 'ME',
     });
   }
+  
+  /**
+   * Returns a random number
+   */
+  static rnd(max) {
+    return Math.floor(Math.random() * max)
+  }
 
   /**
    * Runs an Avatar posture animation.
@@ -284,7 +291,7 @@ class HabiBot {
       user: `user-${this.username}`,
     });
   }
-
+  
   /**
    * Registers a callback for a Habitat event type, which can include one of the below
    * built-in event types or a Neohabitat server message, such as <tt>APPEARING_$</tt> or
@@ -424,17 +431,79 @@ class HabiBot {
 
   /**
    * Walks the HabiBot's Avatar to the provided (x, y) coordinates.
-   * @param {int} x x coordinate to walk to
-   * @param {int} y y coordinate to walk to
+   * @param {int} x    coordinate to walk to
+   * @param {int} y    coordinate to walk to
+   * @param {int} how  direction Avatar is facing
    * @returns {Promise}
    */
-  walkTo(x, y) {
+  walkTo(x, y, how) {
     return this.sendWithDelay({
       op: 'WALK',
       to: 'ME',
       x: x,
       y: y,
-      how: 1,
+      how: how,
+    }, 10000);
+  }
+  
+  /**
+   * Activates FNKEY commands
+   * @param {int} key     function key to use
+   * @param {int} target  the HabiBot's noid
+   * @returns {Promise}
+   */
+  fnKey(key, target) {
+    return this.sendWithDelay({
+      op: 'FNKEY',
+      to: 'ME',
+      key: key,
+      target: target,
+    }, 10000);
+  }
+  
+  /**
+   * Puts the object that the HabiBot is holding onto the provided (x, y) coords
+   * @param {int} containerNoid  where the item is being stored 
+   * @param {int} x              x coordinate to drop the item
+   * @param {int} y              y coordinate to drop the item
+   * @param {int} orientation    new orientation when transfered    
+   * @returns {Promise}
+   */
+  putObj(objRef, containerNoid, x, y, orientation) {
+    return this.sendWithDelay({
+      op: 'PUT',
+      to: objRef,
+      containerNoid: containerNoid,
+      x: x,
+      y: y,
+      orientation: orientation,
+    }, 10000);
+  }
+  
+  walkToAvatar(avatar) {
+    var curPos = avatar.mods[0];
+    var how =  0;
+    if(curPos.x <= 80) {
+        curPos.x = curPos.x + 20;
+    }
+    else
+        curPos.x = curPos.x - 20;
+        how = 1;
+    
+    return this.walkTo(curPos.x, curPos.y, how);
+  }
+  
+  /**
+  * Tells the HabiBot to "touch" an adjacent Avatar
+  * @param {int} 'target' the Avatar that the bot is touching
+  * @returns {Promise}
+  */
+  
+  touchAvatar(noid) {
+    return this.sendWithDelay({
+      op: 'TOUCH',
+      to: 'ME',
+      target: noid,
     }, 10000);
   }
 
