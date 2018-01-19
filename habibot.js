@@ -277,6 +277,15 @@ class HabiBot {
       return null;
     }
   }
+  
+  /**
+   * Returns a specific Object ref 
+   * @param {int} 'num' gets a specific avatar noid/object
+   * @returns {Ref} Object ref
+   */
+  getNoidRef(num) {
+    return this.getNoid(this.getAvatarNoid()-num).ref;
+  }
 
   /**
    * Moves the HabiBot to the provided context name.
@@ -291,6 +300,7 @@ class HabiBot {
       user: `user-${this.username}`,
     });
   }
+  
   
   /**
    * Registers a callback for a Habitat event type, which can include one of the below
@@ -498,12 +508,33 @@ class HabiBot {
   * @param {int} 'target' the Avatar that the bot is touching
   * @returns {Promise}
   */
-  
   touchAvatar(noid) {
     return this.sendWithDelay({
       op: 'TOUCH',
       to: 'ME',
       target: noid,
+    }, 10000);
+  }
+  
+   /**
+  * Tells the HabiBot to "attack" 
+  * @param {int} 'pointed_noid' Avatar noid of the target
+  * @returns {Promise}
+  */
+  attackAvatar(objRef, pointed_noid) {
+    return this.sendWithDelay({
+      op: 'ATTACK',
+      to:  objRef,
+      pointed_noid: pointed_noid,
+    }, 10000);
+  }
+  
+  newRegion(direction, passage_id) {
+    return this.sendWithDelay({
+      to: 'ME',
+      op: 'NEWREGION',
+      direction: direction,
+      passage_id: passage_id,
     }, 10000);
   }
 
