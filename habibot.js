@@ -279,6 +279,47 @@ class HabiBot {
   }
   
   /**
+   * Returns all neighbors of the HabiBots current region
+   * @returns {Object} Habitat neighbor object
+   */
+  getNeighborRegions() {
+      return this.neighbors;
+  }
+  
+  /**
+   * Returns a neighboring region corresponding to the given direction.
+   * @param {String} direction of the neighboring region 
+   * @returns {String} Context of the region
+   */
+  getNeighborRegions(direction) {
+      var temp;
+      switch(direction){
+        case "NORTH": 
+            temp = 0;
+            break;
+        case "EAST": 
+            temp = 1;
+            break;
+        case "SOUTH": 
+            temp = 2;
+            break;
+        case "WEST": 
+            temp = 3;
+            break;
+        default:
+            log.debug('Bot given invalid command: %s' , direction);
+            return null;
+      }
+      
+      if(this.neighbors[temp].length < 1){
+          log.debug("Could not find region to the: %s", direction);
+          return null;
+      }
+      log.debug("%s is located in the %s", this.neighbors[temp], direction);
+      return this.neighbors[temp];
+  }
+  
+  /**
    * Returns a specific Object ref 
    * @param {int} 'num' gets a specific avatar noid/object
    * @returns {Ref} Object ref
@@ -575,6 +616,7 @@ class HabiBot {
     this.history = {};
     this.noids = {};
     this.avatars = {};
+    this.neighbors = {};
   }
 
   onDisconnect() {
@@ -697,6 +739,12 @@ class HabiBot {
       if (o.obj.mods[0].type === 'Avatar') {
         self.avatars[o.obj.name] = o.obj;
       }
+      
+      if (o.obj.mods[0].type === 'Region') {
+        self.neighbors = o.obj.mods[0].neighbors;
+      }
+      
+      
     }
     return o;
   }
