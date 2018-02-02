@@ -282,7 +282,7 @@ class HabiBot {
    * Returns all neighbors of the HabiBots current region
    * @returns {Object} Habitat neighbor object
    */
-  getNeighborRegions() {
+  getNeighbors() {
       return this.neighbors;
   }
   
@@ -291,7 +291,7 @@ class HabiBot {
    * @param {String} direction of the neighboring region 
    * @returns {String} Context of the region
    */
-  getNeighborRegions(direction) {
+  getSpecificNeighbor(direction) {
       var temp;
       switch(direction){
         case "NORTH": 
@@ -739,12 +739,9 @@ class HabiBot {
       if (o.obj.mods[0].type === 'Avatar') {
         self.avatars[o.obj.name] = o.obj;
       }
-      
       if (o.obj.mods[0].type === 'Region') {
         self.neighbors = o.obj.mods[0].neighbors;
       }
-      
-      
     }
     return o;
   }
