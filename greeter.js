@@ -46,7 +46,7 @@ const Argv = require('yargs')
 log.level = Argv.loglevel;
 
 const GreeterBot = HabiBot.newWithConfig(Argv.host, Argv.port, Argv.username);
-const GreetingText = fs.readFileSync(Argv.greetingFile).toString().split('\n');
+const GreetingText = fs.readFileSync(Argv.greetingFile).toString().replace(/\r/g, "").split('\n');
 
 const SlackEnabled = Argv.slackToken !== '';
 const SlackClient = new RtmClient(Argv.slackToken, {
