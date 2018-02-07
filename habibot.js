@@ -277,6 +277,7 @@ class HabiBot {
       return null;
     }
   }
+ 
   
   /**
    * Returns all neighbors of the HabiBots current region
@@ -285,6 +286,7 @@ class HabiBot {
   getNeighbors() {
       return this.neighbors;
   }
+  
   
   /**
    * Returns a neighboring region corresponding to the given direction.
@@ -317,6 +319,42 @@ class HabiBot {
       }
       log.debug("%s is located in the %s", this.neighbors[temp], direction);
       return this.neighbors[temp];
+  }
+  
+
+   /**
+   * Provides instructional information based on the command.
+   * @param {string} msg command for the Habibot
+   */
+  getInstructions(msg) {  
+    switch(msg){
+        case "GO":
+            this.say("The GO command directs your Avatar to move.")
+            .then(() => this.say("Place your cursor on me and then press upward on your joystick to move."))
+            break;
+        case "GOEXAMPLE":
+            this.walkTo(100, 142, 1)
+            .then(() => this.walkTo(40, 145, 0))
+            .then(() => this.faceDirection(constants.FORWARD)) 
+            break;
+        case "PUT":
+            this.say("The PUT command directs your Avatar to place down or store an object.")
+            .then(() => this.say("Point your cursor at the ground and move your joystick to the left"))
+            break;
+        case "GET":
+            this.say("The GET command directs your Avatar to pickup an object.")
+            .then(() => this.say("Point your cursor at an object and move your joystick to the right"))
+            break;
+        case "DO":
+            this.say("The DO command directs your Avatar to perform an action.")
+            .then(() => this.say("The action depends on what your Avatar is holding or pointing at."))
+            break;
+        case "HELP":
+            this.say("To use the HELP command, point your cursor at an object and press F7.")
+            break;
+        default:
+            break;
+    }
   }
   
   /**
@@ -405,7 +443,7 @@ class HabiBot {
       text: text,
     });
   }
-
+  
   /**
    * Speaks each line provided within an array of Strings within the HabiBot's
    * current region, pausing for 2 seconds between each.
