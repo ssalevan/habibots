@@ -283,30 +283,42 @@ class HabiBot {
    * Returns all neighbors of the HabiBots current region
    * @returns {Object} Habitat neighbor object
    */
-  getNeighbors() {
+  getNeighbor() {
       return this.neighbors;
   }
   
   
   /**
-   * Returns a neighboring region corresponding to the given direction.
-   * @param {String} direction of the neighboring region 
+   * Allows the HabiBot to follow a simple roam direction
+   * @param {String} direction to walk to 
    * @returns {String} Context of the region
    */
-  getSpecificNeighbor(direction) {
+  followSimplePath(direction) {
       var temp;
       switch(direction){
         case "NORTH": 
             temp = 0;
+            this.walkTo(140, 158, 1);
+            this.newRegion(2, 1);
+            this.gotoContext(this.neighbors[temp]);
             break;
-        case "EAST": 
+        case "EAST":
             temp = 1;
+            this.walkTo(76, 138, 0);
+            this.newRegion(3, 1);
+            this.gotoContext(this.neighbors[temp]);
             break;
-        case "SOUTH": 
+        case "SOUTH":
             temp = 2;
+            this.walkTo(12, 148, 0);
+            this.newRegion(0, 1);
+            this.gotoContext(this.neighbors[temp]);
             break;
-        case "WEST": 
+        case "WEST":
             temp = 3;
+            this.walkTo(80, 160, 1);
+            this.newRegion(1, 2);
+            this.gotoContext(this.neighbors[temp]);
             break;
         default:
             log.debug('Bot given invalid command: %s' , direction);
@@ -317,8 +329,7 @@ class HabiBot {
           log.debug("Could not find region to the: %s", direction);
           return null;
       }
-      log.debug("%s is located in the %s", this.neighbors[temp], direction);
-      return this.neighbors[temp];
+      log.debug("HabiBot enterting %s through the %s", this.neighbors[temp], direction);
   }
   
 
@@ -358,11 +369,11 @@ class HabiBot {
   }
   
   /**
-   * Returns a specific Object ref 
-   * @param {int} 'num' gets a specific avatar noid/object
-   * @returns {Ref} Object ref
+   * Returns a specific ref from the HabiBot
+   * @param {int} num returns the avatar noid/object
+   * @returns {string} object ref 
    */
-  getNoidRef(num) {
+  getSpecificRef(num) {
     return this.getNoid(this.getAvatarNoid()-num).ref;
   }
 
