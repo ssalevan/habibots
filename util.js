@@ -5,6 +5,9 @@
 
 const log = require('winston');
 
+Array.prototype.random = function () {
+  return this[Math.floor((Math.random()*this.length))];
+}
 
 /**
  * Clones a JavaScript Object, borrowed from:

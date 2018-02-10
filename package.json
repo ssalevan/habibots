@@ -4,8 +4,12 @@
   "description": "In-world bots for Neohabitat",
   "dependencies": {
     "@slack/client": "^3.10.0",
+    "googlemaps": "^1.12.0",
+    "node-weatherunderground": "^1.2.0",
+    "node-wit": "^4.3.0",
     "promise-queue": "^2.2.3",
     "winston": "^2.3.0",
+    "wundergroundnode": "^0.11.0",
     "yargs": "^6.6.0"
   },
   "license": "MIT",

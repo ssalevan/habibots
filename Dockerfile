@@ -35,4 +35,4 @@ RUN npm install -g supervisor
 WORKDIR /habibots
 RUN npm install
 
-ENTRYPOINT /habibots/run
+ENTRYPOINT /habibots/run greeter1
