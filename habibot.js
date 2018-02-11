@@ -198,11 +198,11 @@ class HabiBot {
     var directionUpper = direction.toUpperCase()
     if (directionUpper in DirectionToPoseId) {
       log.debug('Bot @%s:%d facing direction: %s', this.host, this.port, directionUpper)
-      return this.send({
+      return this.sendWithDelay({
         op:   'POSTURE',
         to:   'ME',
         pose: DirectionToPoseId[directionUpper],
-      })
+      }, 5000)
     }
     return Promise.reject(`Invalid direction: ${direction}`)
   }

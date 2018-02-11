@@ -37,7 +37,15 @@ fi
 if [[ "${@}" = *"walker"* ]]; then
   echo 'Launching walker...'
   supervisor --inspect -w "${DIR}" -- walker.js \
-    -g "${DIR}/assets/greeting.txt" \
+    -c "${GREETER1_REGION}" \
+    -h "${HABITAT_HOST}" \
+    -p "${HABITAT_PORT}" \
+    -u tonybanks
+fi
+
+if [[ "${@}" = *"protester"* ]]; then
+  echo 'Launching protester...'
+  supervisor -w "${DIR}" -- protester.js \
     -c "${GREETER1_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
