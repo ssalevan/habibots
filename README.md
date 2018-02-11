@@ -13,7 +13,6 @@ Installing/Running
 Run the following command to install habibots:
 
 ```
-<<<<<<< Updated upstream
 git clone https://github.com/ssalevan/habibots
 cd habibots
 npm install habibots --save
@@ -29,10 +28,8 @@ git clone https://github.com/ssalevan/habibots
 cd habibots
 sudo apt-get install dos2unix
 dos2unix run
-./run
-=======
+./run greeter1
 npm install
->>>>>>> Stashed changes
 ```
 
 Writing a Habibot
