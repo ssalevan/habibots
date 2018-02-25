@@ -245,6 +245,20 @@ class HabiBot {
     }
     return -1
   }
+  
+   /**
+   * Obtains the noid of every Avatar in the current region, except for the HabiBot's noid.
+   * @returns {Object} Array holding the noid of every present Avatar
+   */
+  getGreedyNoid() {
+    var ar = []
+    for (var i in this.avatars) {
+      if (this.getAvatarNoid() != this.avatars[i].mods[0].noid) {
+        ar.push(this.avatars[i])
+      }
+    }
+    return ar
+  }
 
   /**
    * Returns the direction of a Habitat object relative to the HabiBot's current region
