@@ -39,14 +39,27 @@ CurserBot.on('connected', (bot) => {
 })
 
 CurserBot.on('enteredRegion', (bot, me) => {
-  if (bot.getAvatar().mods[0].curse_count <= 0) { //Once the bot is cured, turn into a ghost
+  bot.ensureCorporated()
+  if (bot.getAvatar().mods[0].curse_count <= 0) {
     log.debug('CurserBot is cured.');
-    bot.discorporate()
     return
   }
-  bot.ensureCorporated()
-    .then(() => bot.walkTo(80, 142, 0))
-    .then(() => bot.faceDirection(constants.FORWARD))
+  var avatar = bot.getGreedyNoid().random()
+  if (avatar == null) {
+    bot.wait(20000)
+      .then(() => bot.walkToRandomExit())
+      return
+  //JSN: There's a glitch where ghosted users return as type "Avatar" rather than type "Ghost."
+  } else if (avatar.mods[0].noid > 255 || avatar.mods[0].curse_type != 0) { 
+    bot.wait(20000)
+      .then(() => bot.walkToRandomExit())
+      return
+  } else {
+    bot.walkToAvatar(avatar)
+      .then(() => bot.touchAvatar(avatar.mods[0].noid))
+      .then(() => bot.say("Enjoy the new head!"))
+      .then(() => bot.walkToRandomExit())
+  }
 })
 
 CurserBot.on('APPEARING_$', (bot, msg) => {
