@@ -44,13 +44,12 @@ CurserBot.on('enteredRegion', (bot, me) => {
     log.debug('CurserBot is cured.');
     return
   }
-  var avatar = bot.getGreedyNoid().random()
+  var avatar = bot.collectAvatarNoids().random()
   if (avatar == null) {
     bot.wait(20000)
       .then(() => bot.walkToRandomExit())
       return
-  //JSN: There's a glitch where ghosted users return as type "Avatar" rather than type "Ghost."
-  } else if (avatar.mods[0].noid > 255 || avatar.mods[0].curse_type != 0) { 
+  } else if (avatar.mods[0].curse_type != 0) { 
     bot.wait(20000)
       .then(() => bot.walkToRandomExit())
       return

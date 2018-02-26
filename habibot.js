@@ -84,18 +84,6 @@ class HabiBot {
     return bot
   }
 
-  /**
-   * Tells the HabiBot to "attack" 
-   * @param {int} 'pointed_noid' Avatar noid of the target
-   * @returns {Promise}
-   */
-  attackAvatar(objRef, pointed_noid) {
-    return this.sendWithDelay({
-      op: 'ATTACK',
-      to:  objRef,
-      pointed_noid: pointed_noid,
-    }, 10000)
-  }
 
   /**
    * Connects this HabiBot to the Neohabitat server if it is not yet connected.
@@ -221,6 +209,19 @@ class HabiBot {
       target: target,
     }, 10000)
   }
+  
+  /**
+   * Tells the HabiBot to "attack" 
+   * @param {int} 'pointed_noid' Avatar noid of the target
+   * @returns {Promise}
+   */
+  attackAvatar(objRef, pointed_noid) {
+    return this.sendWithDelay({
+      op: 'ATTACK',
+      to:  objRef,
+      pointed_noid: pointed_noid,
+    }, 10000)
+  }
 
   /**
    * Returns the Habitat object corresponding to this HabiBot's Avatar returns null if
@@ -247,13 +248,14 @@ class HabiBot {
   }
   
    /**
-   * Obtains the noid of every Avatar in the current region, except for the HabiBot's noid.
-   * @returns {Object} Array holding the noid of every present Avatar
+   * Obtains the noid of every Avatar in the current region, but excludes ghosted Avatars and the HabiBot.
+   * @returns {Object} Array holding the noid of every Avatar in the same location as the HabiBot
    */
-  getGreedyNoid() {
+  collectAvatarNoids() {
     var ar = []
     for (var i in this.avatars) {
-      if (this.getAvatarNoid() != this.avatars[i].mods[0].noid) {
+      if (this.getAvatarNoid() != this.avatars[i].mods[0].noid 
+      && this.avatars[i].mods[0].noid < 255) {
         ar.push(this.avatars[i])
       }
     }
