@@ -220,7 +220,7 @@ class HabiBot {
       op: 'ATTACK',
       to:  objRef,
       pointed_noid: pointed_noid,
-    }, 10000)
+    }, 5000)
   }
 
   /**
@@ -322,6 +322,10 @@ class HabiBot {
       log.error('Could not find noid: %s', noid)
       return null
     }
+  }
+  
+  getStuff(num){
+      this.getNoid(this.getAvatarNoid()-num).ref;
   }
 
   /**
