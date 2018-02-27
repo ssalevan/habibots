@@ -323,10 +323,6 @@ class HabiBot {
       return null
     }
   }
-  
-  getStuff(num){
-      this.getNoid(this.getAvatarNoid()-num).ref;
-  }
 
   /**
    * Moves the HabiBot to the provided context name.
