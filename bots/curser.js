@@ -14,8 +14,8 @@ var log = require('winston');
 log.remove(log.transports.Console);
 log.add(log.transports.Console, { 'timestamp': true });
 
-const constants = require('./constants');
-const HabiBot = require('./habibot');
+const constants = require('../constants');
+const HabiBot = require('../habibot');
 
 const Argv = require('yargs')
   .usage('Usage: $0 [options]')

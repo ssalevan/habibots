@@ -24,8 +24,8 @@ const CLIENT_EVENTS = require('@slack/client').CLIENT_EVENTS;
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 const MemoryDataStore = require('@slack/client').MemoryDataStore;
 
-const constants = require('./constants');
-const HabiBot = require('./habibot');
+const constants = require('../constants');
+const HabiBot = require('../habibot');
 
 const Argv = require('yargs')
   .usage('Usage: $0 [options]')

@@ -14,7 +14,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [[ "${@}" = *"greeter1"* ]]; then
   echo 'Launching greeter1...'
-  supervisor -w "${DIR}" -- greeter.js \
+  supervisor -w "${DIR}" -- bots/greeter.js \
     -g "${DIR}/assets/greeting.txt" \
     -s "${HABIBOTS_SLACK_TOKEN}" \
     -c "${GREETER1_REGION}" \
@@ -26,7 +26,7 @@ fi
 
 if [[ "${@}" = *"conversationalist"* ]]; then
   echo 'Launching conversationalist...'
-  supervisor -w "${DIR}" -- conversationalist.js \
+  supervisor -w "${DIR}" -- bots/conversationalist.js \
     -w "${HABIBOTS_WIT_TOKEN}" \
     -c "${CONVERSATIONALIST_REGION}" \
     -h "${HABITAT_HOST}" \
@@ -36,7 +36,7 @@ fi
 
 if [[ "${@}" = *"walker"* ]]; then
   echo 'Launching walker...'
-  supervisor --inspect -w "${DIR}" -- walker.js \
+  supervisor --inspect -w "${DIR}" -- bots/walker.js \
     -c "${GREETER1_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
@@ -45,7 +45,7 @@ fi
 
 if [[ "${@}" = *"protester"* ]]; then
   echo 'Launching protester...'
-  supervisor -w "${DIR}" -- protester.js \
+  supervisor -w "${DIR}" -- bots/protester.js \
     -c "${GREETER1_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
