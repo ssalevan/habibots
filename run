@@ -9,6 +9,7 @@ HABITAT_HOST="${HABIBOTS_HOST-app.neohabitat.org}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
 CONVERSATIONALIST_REGION="${HABIBOTS_CONVERSATIONALIST_REGION-context-welcomecenterinthatch}"
 GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-welcomecenterinthatch}"
+SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -50,4 +51,14 @@ if [[ "${@}" = *"protester"* ]]; then
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
     -u tonybanks
+fi
+
+if [[ "${@}" = *"oracle"* ]]; then
+  echo 'Launching oracle...'
+  supervisor -w "${DIR}" -- bots/oracle.js \
+    -c "${GREETER1_REGION}" \
+    -h "${HABITAT_HOST}" \
+    -p "${HABITAT_PORT}" \
+    -s "${SLACK_TOKEN}" \
+    -u devil
 fi

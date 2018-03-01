@@ -451,6 +451,20 @@ class HabiBot {
   }
   
   /**
+   * Sends the provided text in the form of an ESP message.
+   * @param {string} text text to speak
+   * @return {Promise}
+   */
+  ESPsay(text) {
+    return this.send({
+      op: 'ESP',
+      to: 'ME',
+      esp: 1,
+      text: text,
+    })
+  }
+  
+  /**
    * Speaks each line provided within an array of Strings within the HabiBot's
    * current region, pausing for 2 seconds between each.
    * @param {array} textLines text lines to speak
