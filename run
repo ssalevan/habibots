@@ -13,6 +13,13 @@ SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Borrowed from:
+# https://blog.dhampir.no/content/sleeping-without-a-subprocess-in-bash-and-how-to-sleep-forever
+snore() {
+  [[ -n "${_snore_fd:-}" ]] || exec {_snore_fd}<> <(:)
+  read ${1:+-t "$1"} -u $_snore_fd || :
+}
+
 if [[ "${@}" = *"greeter1"* ]]; then
   echo 'Launching greeter1...'
   supervisor -w "${DIR}" -- bots/greeter.js \
@@ -32,7 +39,7 @@ if [[ "${@}" = *"conversationalist"* ]]; then
     -c "${CONVERSATIONALIST_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
-    -u tonybanks
+    -u tonybanks &
 fi
 
 if [[ "${@}" = *"walker"* ]]; then
@@ -50,7 +57,7 @@ if [[ "${@}" = *"protester"* ]]; then
     -c "${GREETER1_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
-    -u tonybanks
+    -u tonybanks &
 fi
 
 if [[ "${@}" = *"oracle"* ]]; then
@@ -60,5 +67,7 @@ if [[ "${@}" = *"oracle"* ]]; then
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
     -s "${SLACK_TOKEN}" \
-    -u devil
+    -u devil &
 fi
+
+snore
