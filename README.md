@@ -26,10 +26,10 @@ Access your local machine with cd /mnt/c
 cd into a folder of your choosing
 git clone https://github.com/ssalevan/habibots
 cd habibots
+npm install
 sudo apt-get install dos2unix
 dos2unix run
 ./run greeter1
-npm install
 ```
 
 Writing a Habibot
