@@ -40,7 +40,7 @@ AttackerBot.on('connected', (bot) => {
 
 AttackerBot.on('enteredRegion', (bot, me) => {
   var victim = bot.collectAvatarNoids().random()
-  if (me.to.substring(8, 14) != "back4t") {
+  if (bot.currentRealm() != "Back4t") {
     bot.newRegion(2)
       .then(() => bot.gotoContext("context-back4t_25"))
       return

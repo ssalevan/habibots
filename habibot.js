@@ -543,6 +543,13 @@ class HabiBot {
       .map((neighbor, i) => neighbor !== '' ? NeighborIndexToCardinal[i] : null)
       .filter(cardinal => cardinal !== null)
   }
+  
+  /**
+   * Returns the realm of the Habibot's current region.
+   */
+  currentRealm() {
+    return this.realm  
+  }
 
   /**
    * Waits for the provided number of milliseconds, resolving the returned Promise.
@@ -672,6 +679,7 @@ class HabiBot {
     this.noids = {}
     this.avatars = {}
     this.neighbors = {}
+    this.realm = {}
   }
 
   onDisconnect() {
@@ -796,6 +804,7 @@ class HabiBot {
       }
       if (o.obj.mods[0].type === 'Region') {
         self.neighbors = o.obj.mods[0].neighbors
+        self.realm = o.obj.mods[0].realm
       }
     }
     return o
