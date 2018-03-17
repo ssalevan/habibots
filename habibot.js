@@ -481,6 +481,24 @@ class HabiBot {
       }, 2000)
     }))
   }
+  
+  /**
+   * 
+   * Functions exactly like sayLines, but it sends ESP messages.
+   * @param {array} textLines text lines to speak
+   * @return {Promise}
+   */
+  ESPsayLines(textLines) {
+    var self = this
+    return Promise.all(textLines.map((line) => {
+      return self.sendWithDelay({
+        op: 'ESP',
+        to: 'ME',
+        esp: 1,
+        text: line
+      }, 2000)
+    }))
+  }
 
   /**
    * Sends the provided Elko message to the Neohabitat server.
@@ -531,6 +549,18 @@ class HabiBot {
       op: 'TOUCH',
       to: 'ME',
       target: noid,
+    }, 10000)
+  }
+  
+  /**
+   * Tells the HabiBot to open a door
+   * @param {ref} the door's ref
+   * @returns {Promise}
+   */
+  openDoor(ref) {
+    return this.sendWithDelay({
+      op: 'OPEN',
+      to: obj,
     }, 10000)
   }
 

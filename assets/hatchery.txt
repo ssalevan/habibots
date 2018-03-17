@@ -1,0 +1,2 @@
+Welcome to Habitat! Visit http://exhibit-demo.spi.ne/ to learn how to play. 
+Type "!repeat" if you would like to hear this again.

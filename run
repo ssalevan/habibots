@@ -5,10 +5,11 @@ set -eo pipefail
 
 trap 'kill %1; kill %2' SIGINT
 
-HABITAT_HOST="${HABIBOTS_HOST-app.neohabitat.org}"
+HABITAT_HOST="${HABIBOTS_HOST-127.0.0.1}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
 CONVERSATIONALIST_REGION="${HABIBOTS_CONVERSATIONALIST_REGION-context-welcomecenterinthatch}"
 GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-welcomecenterinthatch}"
+HATCHERY_REGION="${HABIBOTS_GREETER1_REGION-context-hatchery}"
 SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -51,9 +52,9 @@ if [[ "${@}" = *"walker"* ]]; then
     -u tonybanks
 fi
 
-if [[ "${@}" = *"protester"* ]]; then
+if [[ "${@}" = *"attacker"* ]]; then
   echo 'Launching protester...'
-  supervisor -w "${DIR}" -- bots/protester.js \
+  supervisor -w "${DIR}" -- bots/attacker.js \
     -c "${GREETER1_REGION}" \
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
@@ -68,6 +69,17 @@ if [[ "${@}" = *"oracle"* ]]; then
     -p "${HABITAT_PORT}" \
     -s "${SLACK_TOKEN}" \
     -u devil &
+fi
+
+if [[ "${@}" = *"hatchery"* ]]; then
+  echo 'Launching hatchery...'
+  supervisor -w "${DIR}" -- bots/hatchery.js \
+    -g "${DIR}/assets/hatchery.txt" \
+    -c "${HATCHERY_REGION}" \
+    -h "${HABITAT_HOST}" \
+    -p "${HABITAT_PORT}" \
+    -s "${SLACK_TOKEN}" \
+    -u tonybanks &
 fi
 
 snore
