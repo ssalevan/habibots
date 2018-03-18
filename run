@@ -75,4 +75,4 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -u tonybanks &
 fi
 
-sleep forever
+cat

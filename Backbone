@@ -2,7 +2,7 @@
 clusters:
   - habibots:
       image: philcollins/habibots
-      command: "{{ debug.command }}"
+      command: "/habibots/run hatchery"
       environment:
         - "HABIBOTS_SLACK_TOKEN={{ vault.habibots_slack_token }}"
         - "HABIBOTS_HOST=app.neohabitat.org"
