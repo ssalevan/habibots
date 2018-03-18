@@ -14,13 +14,6 @@ SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Borrowed from:
-# https://blog.dhampir.no/content/sleeping-without-a-subprocess-in-bash-and-how-to-sleep-forever
-snore() {
-  [[ -n "${_snore_fd:-}" ]] || exec {_snore_fd}<> <(:)
-  read ${1:+-t "$1"} -u $_snore_fd || :
-}
-
 if [[ "${@}" = *"greeter1"* ]]; then
   echo 'Launching greeter1...'
   supervisor -w "${DIR}" -- bots/greeter.js \
@@ -82,4 +75,4 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -u tonybanks &
 fi
 
-snore
+sleep forever
