@@ -14,6 +14,8 @@ SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+cd ${DIR}
+
 if [[ "${@}" = *"greeter1"* ]]; then
   echo 'Launching greeter1...'
   supervisor -w "${DIR}" -- bots/greeter.js \
