@@ -560,7 +560,7 @@ class HabiBot {
   openDoor(ref) {
     return this.sendWithDelay({
       op: 'OPEN',
-      to: obj,
+      to: ref,
     }, 10000)
   }
 

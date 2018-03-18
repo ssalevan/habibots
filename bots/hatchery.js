@@ -67,7 +67,6 @@ HatcheryBot.on('connected', (bot) => {
 })
 
 HatcheryBot.on('enteredRegion', (bot, me) => {
-  SlackClient.sendMessage("HatcheryBot engaged.", SlackChannelId)
   bot.ensureCorporated()
     .then(() => bot.walkTo(44, 137, 1))
     .then(() => HatcheryBot.wait(10000))
@@ -82,12 +81,13 @@ HatcheryBot.on('APPEARING_$', (bot, msg) => {
     return
   }
   
-  bot.wait(5000)
-    .then(() => bot.say("TO: " + avatar.name))
+  bot.say("TO: " + avatar.name)
     .then(() => bot.wait(5000))
     .then(() => bot.ESPsayLines(GreetingText))
     .then(() => bot.wait(5000))
     .then(() => bot.ESPsay(""))
+    .then(() => bot.wait(15000))
+    .then(() => bot.say(avatar.name + ", your visa was approved. Please proceed through the door."))
 })
 
 HatcheryBot.on('SPEAK$', (bot, msg) => {
@@ -96,7 +96,7 @@ HatcheryBot.on('SPEAK$', (bot, msg) => {
     return
   }
   
-  if (msg.text === "!repeat") {
+  if (msg.text === "!help") {
     bot.say("TO: " + avatar.name)
       .then(() => bot.wait(5000))
       .then(() => bot.ESPsayLines(GreetingText))
