@@ -563,6 +563,18 @@ class HabiBot {
       to: ref,
     }, 10000)
   }
+  
+  /**
+   * Tells the HabiBot to close a door
+   * @param {ref} the door's ref
+   * @returns {Promise}
+   */
+  closeDoor(ref){
+    return this.sendWithDelay({
+      op: 'CLOSE',
+      to: ref,
+    }, 10000)
+  }
 
   /**
    * Returns a list of all cardinal directions from this region which connect to other
