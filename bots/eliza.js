@@ -61,7 +61,7 @@ ElizaBot.on('SPEAK$', (bot, msg) => {
     return
   }
     
-  bot.say(ElizaBot.transform(msg.text))
+  bot.say(Eliza.transform(msg.text))
   if (Eliza.quit) { //Reset Eliza if the user quits
     Eliza.reset()
   }
