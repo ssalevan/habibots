@@ -133,8 +133,7 @@ HatcheryBot.on('CLOSE$', (bot, msg) => {
 })
 
 HatcheryBot.connect()
-/*
+
 if (SlackEnabled) {
   SlackClient.start()
 }
-*/
