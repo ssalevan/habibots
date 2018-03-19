@@ -576,6 +576,14 @@ class HabiBot {
     }, 10000)
   }
 
+  sitOrstand(num, chairNoid) {
+    return this.sendWithDelay({
+      op: 'SITORSTAND',
+      to: 'ME',
+      up_or_down: num,
+      seat_id: chairNoid
+    }, 5000)
+  }
   /**
    * Returns a list of all cardinal directions from this region which connect to other
    * regions, useful when determining an exit when calling walkToExit.

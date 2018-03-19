@@ -44,6 +44,7 @@ log.level = Argv.loglevel
 const HatcheryBot = HabiBot.newWithConfig(Argv.host, Argv.port, Argv.username)
 const GreetingText = fs.readFileSync(Argv.greetingFile).toString().replace(/\r/g, "").split('\n')
 
+
 const SlackEnabled = Argv.slackToken !== ''
 const SlackClient = new RtmClient(Argv.slackToken, {
   logLevel: 'error', 
@@ -68,9 +69,8 @@ HatcheryBot.on('connected', (bot) => {
 
 HatcheryBot.on('enteredRegion', (bot, me) => {
   bot.ensureCorporated()
-    .then(() => bot.walkTo(44, 137, 1))
-    .then(() => HatcheryBot.wait(10000))
-    .then(() => bot.faceDirection(constants.FORWARD))
+    .then(() => bot.walkTo(136, 145, 0))
+    .then(() => bot.sitOrstand(1, 3))
     .then(() => SlackClient.sendMessage("HatcheryBot engaged.", SlackChannelId))
 })
 
@@ -90,6 +90,24 @@ HatcheryBot.on('APPEARING_$', (bot, msg) => {
     .then(() => bot.say(avatar.name + ", your visa was approved. Please proceed through the door."))
 })
 
+/*
+ * This is a blatant hack for recognizing de-ghosted Avatars.
+ * For some reason a de-ghosted Avatar returns their type as "null"
+ * which needs to be fixed
+ */
+HatcheryBot.on('make', (bot, msg) => {
+  var avatar = msg.obj
+  if(msg.type === null && avatar.mods[0].amAGhost === false) {
+    bot.say("TO: " + avatar.name)
+    .then(() => bot.wait(5000))
+    .then(() => bot.ESPsayLines(GreetingText))
+    .then(() => bot.wait(5000))
+    .then(() => bot.ESPsay(""))
+    .then(() => bot.wait(15000))
+    .then(() => bot.say(avatar.name + ", your visa was approved. Please proceed through the door."))
+  }
+})
+
 HatcheryBot.on('SPEAK$', (bot, msg) => {
   var avatar = bot.getNoid(msg.noid)
   if (msg.noid === bot.getAvatarNoid()) {
@@ -106,12 +124,17 @@ HatcheryBot.on('SPEAK$', (bot, msg) => {
 })
 
 HatcheryBot.on('CLOSE$', (bot, msg) => {
-  bot.openDoor(HatcheryBot.getNoid(msg.target).ref)
+  bot.sitOrstand(0, 3)
+    .then(() => bot.walkTo(76, 160, 1))
+    .then(() => bot.openDoor(HatcheryBot.getNoid(msg.target).ref))
     .then(() => bot.say("Hmmm. People keep closing the door..."))
+    .then(() => bot.walkTo(136, 145, 0))
+    .then(() => bot.sitOrstand(1, 3))
 })
 
 HatcheryBot.connect()
-
+/*
 if (SlackEnabled) {
   SlackClient.start()
 }
+*/
