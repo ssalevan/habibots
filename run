@@ -75,7 +75,7 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -p "${HABITAT_PORT}" \
     -s "${SLACK_TOKEN}" \
     -l "newavatars" \
-    -u WelcomeBot &
+    -u welcomebot &
 fi
 
 cat
