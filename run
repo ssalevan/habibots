@@ -78,4 +78,4 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -u welcomebot &
 fi
 
-cat
+sleep 999999999999999
