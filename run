@@ -74,6 +74,7 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
     -s "${SLACK_TOKEN}" \
+    -l "newavatars" \
     -u tonybanks &
 fi
 
