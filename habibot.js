@@ -747,82 +747,22 @@ class HabiBot {
   }
 
   processData(buf) {
-    var framed = false
-    var firstEOL = false
-    var JSONFrame = ""
-    var blob = buf.toString()
-
-    var o = null
-    for (var i=0; i < blob.length; i++) {
-      var c = blob.charCodeAt(i)
-      if (framed) {
-        JSONFrame += String.fromCharCode(c)
-        if (10 === c) {
-          if (!firstEOL) {
-            firstEOL = true
-          } else {
-            o = this.processElkoPacket(JSONFrame)
-            framed    = false
-            firstEOL  = false
-            JSONFrame = ""
-          }
-        }
-      } else {
-        if (123 === c) {
-          framed = true
-          firstEOL = false
-          JSONFrame = "{"
-        } else {
-          if (10 !== c) {
-            log.debug('IGNORED: %s', c)         
-          }
-        }
-      }
-    }
-    if (framed) { 
-      o = this.processElkoPacket(JSONFrame)
-      framed    = false
-      firstEOL  = false
-      JSONFrame = ''
-    }
-
-    if (o != null) {
-      if (o.op in this.callbacks) {
-        log.debug('Running callbacks for op: %s', o.op)
-        for (var i in this.callbacks[o.op]) {
-          this.callbacks[o.op][i](this, o)
-        }
-      }
-      for (var i in this.callbacks.msg) {
-        this.callbacks.msg[i](this, o)
-      }
-
-      // Removes the local object reference if a delete message has been sent.
-      if (o.op === 'delete') {
-        var obj = this.history[o.to]
-        this.clearNames(o.to)
-        if ('obj' in obj && obj.obj.mods[0].type === 'Avatar') {
-          delete this.avatars[obj.obj.name]
-        }
-        delete this.history[o.to]
-      }
-    }
+    util.parseElko(buf).forEach((message) => {
+      this.processElkoMessage(message);
+    })
   }
 
-  processElkoPacket(s) {
-    log.debug('<-%s:%s: %s', this.host, this.port, s.trim())
-    return this.scanForRefs(s)
-  }
+  processElkoMessage(o) {
+    var self = this;
+    log.debug('Processing Elko message: %s', JSON.stringify(o));
 
-  scanForRefs(s) {
-    var self = this
-    var o = util.parseElko(s)
-    
     if (o.to) {
       self.addNames(o.to)
     }
-    if (!o.op) {
-      return
+
+    // If this is not a state-modifying Elko message, ignores it.
+    if (o === null || !o.op) {
+      return;
     }
 
     // HEREIS does not use the same params as make. TODO fix one day.
@@ -830,6 +770,7 @@ class HabiBot {
       o.obj = o.object
     }
 
+    // Adds the object to this Habibot's state if it specifies a 'make' operation.
     if (o.op === 'make' || o.op == 'HEREIS_$') {
       var ref = o.obj.ref
       self.addNames(ref)
@@ -857,6 +798,31 @@ class HabiBot {
         self.realm = o.obj.mods[0].realm
       }
     }
+
+    // Removes the local object reference if a delete message has been sent.
+    if (o.op === 'delete') {
+      var obj = this.history[o.to]
+      this.clearNames(o.to)
+      if ('obj' in obj && obj.obj.mods[0].type === 'Avatar') {
+        delete this.avatars[obj.obj.name]
+      }
+      delete this.history[o.to]
+    }
+
+    // If the operation specified by this Elko message is within this Habibot's callbacks,
+    // calls it. 
+    if (o.op in this.callbacks) {
+      log.debug('Running callbacks for op: %s', o.op)
+      for (var i in this.callbacks[o.op]) {
+        this.callbacks[o.op][i](this, o)
+      }
+    }
+
+    // Calls callbacks that receive all general messages.
+    for (var i in this.callbacks.msg) {
+      this.callbacks.msg[i](this, o)
+    }
+
     return o
   }
 

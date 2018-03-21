@@ -53,17 +53,24 @@ function clone(obj) {
 /**
  * JSON parses an Elko message, handling errors.
  * 
- * @param String s
- * @returns Object The JSON object from the message or {}
+ * @param String s A collection of 
+ * @returns List 
  */
 function parseElko(s) {
-  var o = {};
-  try {
-    o = JSON.parse(s);
-  } catch (e) {
-    log.warn("Unable to parse: " + s + "\n\n" + JSON.stringify(e, null, 2));
+  var parsedMessages = [];
+  var messages = s.toString().split('\n');
+  for (var i in messages) {
+    if (messages[i].length == 0) {
+      continue;
+    }
+    try {
+      var parsedMessage = JSON.parse(messages[i]);
+      parsedMessages.push(parsedMessage);
+    } catch (e) {
+      log.warn("Unable to parse: " + s + "\n\n" + JSON.stringify(e, null, 2));
+    }
   }
-  return o;
+  return parsedMessages;
 }
 
 

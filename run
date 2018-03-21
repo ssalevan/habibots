@@ -8,6 +8,7 @@ trap 'kill %1; kill %2' SIGINT
 HABITAT_HOST="${HABIBOTS_HOST-app.neohabitat.org}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
 CONVERSATIONALIST_REGION="${HABIBOTS_CONVERSATIONALIST_REGION-context-welcomecenterinthatch}"
+ELIZA_REGION="${HABIBOTS_ELIZA_REGION-context-Downtown_5f}"
 GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-welcomecenterinthatch}"
 HATCHERY_REGION="${HABIBOTS_HATCHERY_REGION-context-hatchery}"
 SLACK_TOKEN="${HABIBOTS_SLACK_TOKEN-XXXXXXXXXXXXXXXXXXXXXXXXXXXX}"
@@ -36,6 +37,15 @@ if [[ "${@}" = *"conversationalist"* ]]; then
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
     -u tonybanks &
+fi
+
+if [[ "${@}" = *"eliza"* ]]; then
+  echo 'Launching eliza...'
+  supervisor -w "${DIR}" -- bots/eliza.js \
+    -c "${ELIZA_REGION}" \
+    -h "${HABITAT_HOST}" \
+    -p "${HABITAT_PORT}" \
+    -u elizabot &
 fi
 
 if [[ "${@}" = *"walker"* ]]; then
