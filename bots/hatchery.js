@@ -96,15 +96,16 @@ HatcheryBot.on('APPEARING_$', (bot, msg) => {
  * which needs to be fixed
  */
 HatcheryBot.on('make', (bot, msg) => {
-  var avatar = msg.obj
-  if(msg.type === null && avatar.mods[0].amAGhost === false) {
-    bot.say("TO: " + avatar.name)
-    .then(() => bot.wait(5000))
-    .then(() => bot.ESPsayLines(GreetingText))
-    .then(() => bot.wait(5000))
-    .then(() => bot.ESPsay(""))
-    .then(() => bot.wait(15000))
-    .then(() => bot.say(avatar.name + ", your visa was approved. Please proceed through the door."))
+  if (msg.obj.mods[0].type == "Avatar") {
+    if (msg.type !== undefined && msg.type === null) {  
+    bot.say("TO: " + msg.obj.name) 
+      .then(() => bot.wait(5000))
+      .then(() => bot.ESPsayLines(GreetingText))
+      .then(() => bot.wait(5000))
+      .then(() => bot.ESPsay(""))
+      .then(() => bot.wait(15000))
+      .then(() => bot.say(msg.obj.name + ", your visa was approved. Please proceed through the door."))
+    }
   }
 })
 
