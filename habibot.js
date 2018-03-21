@@ -530,7 +530,7 @@ class HabiBot {
         self.substituteState(obj)
         var msg = JSON.stringify(obj)
         setTimeout(() => {
-          log.debug('%s:%s->: %s', self.host, self.port, msg.trim())
+          log.debug('->SEND@%s:%s: %s', self.host, self.port, msg.trim())
           self.server.write(msg + '\n\n', 'UTF8', () => {
             resolve()
           })
@@ -746,18 +746,17 @@ class HabiBot {
     }
   }
 
-  processData(buf) {
-    util.parseElko(buf).forEach((message) => {
+  processData(buffer) {
+    var self = this;
+    util.parseElko(buffer).forEach((message) => {
+      log.debug('<-RCVD@%s:%s: %s', self.host, self.port, JSON.stringify(message));
       this.processElkoMessage(message);
-    })
+    });
   }
 
   processElkoMessage(o) {
-    var self = this;
-    log.debug('Processing Elko message: %s', JSON.stringify(o));
-
     if (o.to) {
-      self.addNames(o.to)
+      this.addNames(o.to)
     }
 
     // If this is not a state-modifying Elko message, ignores it.
@@ -773,29 +772,29 @@ class HabiBot {
     // Adds the object to this Habibot's state if it specifies a 'make' operation.
     if (o.op === 'make' || o.op == 'HEREIS_$') {
       var ref = o.obj.ref
-      self.addNames(ref)
-      self.history[ref] = o
+      this.addNames(ref)
+      this.history[ref] = o
       if ('mods' in o.obj && o.obj.mods.length > 0) {
-        self.noids[o.obj.mods[0].noid] = o.obj
+        this.noids[o.obj.mods[0].noid] = o.obj
       }
       if (o.you) {
         var split = ref.split('-')
-        self.names.ME = ref
-        self.names.USER = `${split[0]}-${split[1]}`
+        this.names.ME = ref
+        this.names.USER = `${split[0]}-${split[1]}`
         log.debug('Running callbacks for enteredRegion')
-        self.callbacks.enteredRegion.forEach((callback) => {
-          callback(self, o)
+        this.callbacks.enteredRegion.forEach((callback) => {
+          callback(this, o)
         })
       }
       if (o.obj.mods[0].type === 'Ghost') {
-        self.names.GHOST = ref
+        this.names.GHOST = ref
       }
       if (o.obj.mods[0].type === 'Avatar') {
-        self.avatars[o.obj.name] = o.obj
+        this.avatars[o.obj.name] = o.obj
       }
       if (o.obj.mods[0].type === 'Region') {
-        self.neighbors = o.obj.mods[0].neighbors
-        self.realm = o.obj.mods[0].realm
+        this.neighbors = o.obj.mods[0].neighbors
+        this.realm = o.obj.mods[0].realm
       }
     }
 
