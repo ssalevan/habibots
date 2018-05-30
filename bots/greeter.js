@@ -9,7 +9,7 @@ const Defaults = {
   port:         1337,
   reconnect:    true,
   echoChat:     false,
-  slackChannel: 'newavatars',
+  slackChannel: 'general',
   slackToken:   ''
 };
 
@@ -61,7 +61,19 @@ let SlackChannelId;
 SlackClient.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
   for (const c of rtmStartData.channels) {
     if (c.name === Argv.slackChannel) {
-      SlackChannelId = c.id 
+      SlackChannelId = c.id;
+    }
+  }
+});
+
+
+GreeterBot.on('OBJECTSPEAK_$', (bot, msg) => {
+  if (msg.text.includes('has arrived.')) {
+    var newAvatar = msg.text.substring(1).split(' has arrived.')[0];
+    // Announces new user to Slack.
+    if (SlackEnabled) {
+      SlackClient.sendMessage(
+        `New Avatar arrived in Habitat: ${newAvatar}`, SlackChannelId);
     }
   }
 });
@@ -72,11 +84,6 @@ GreeterBot.on('APPEARING_$', (bot, msg) => {
   if (avatar == null) {
     log.error('No avatar found at noid: %s', msg.appearing);
     return;
-  }
-
-  // Announces new user to Slack.
-  if (SlackEnabled) {
-    SlackClient.sendMessage(`New Avatar arrived: ${avatar.name}`, SlackChannelId);
   }
 
   // Faces the Avatar, waves to them, faces forward again, and says the greeting text.

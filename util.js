@@ -51,14 +51,14 @@ function clone(obj) {
 
 
 /**
- * JSON parses an Elko message, handling errors.
+ * JSON parses one or more Elko messages, handling parse errors.
  * 
- * @param String s A collection of 
- * @returns List 
+ * @param Buffer buffer A buffer from a TCP onReceive callback
+ * @returns List A list of parsed Elko messages
  */
-function parseElko(s) {
+function parseElko(buffer) {
   var parsedMessages = [];
-  var messages = s.toString().split('\n');
+  var messages = buffer.toString().split('\n');
   for (var i in messages) {
     if (messages[i].length == 0) {
       continue;
@@ -67,7 +67,7 @@ function parseElko(s) {
       var parsedMessage = JSON.parse(messages[i]);
       parsedMessages.push(parsedMessage);
     } catch (e) {
-      log.warn("Unable to parse: " + s + "\n\n" + JSON.stringify(e, null, 2));
+      log.warn("Unable to parse: " + buffer + "\n\n" + JSON.stringify(e, null, 2));
     }
   }
   return parsedMessages;
