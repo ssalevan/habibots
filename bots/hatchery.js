@@ -71,7 +71,6 @@ HatcheryBot.on('enteredRegion', (bot, me) => {
   bot.ensureCorporated()
     .then(() => bot.walkTo(136, 145, 0))
     .then(() => bot.sitOrstand(1, 3))
-    .then(() => SlackClient.sendMessage("HatcheryBot engaged.", SlackChannelId))
 })
 
 HatcheryBot.on('APPEARING_$', (bot, msg) => {
@@ -132,6 +131,17 @@ HatcheryBot.on('CLOSE$', (bot, msg) => {
     .then(() => bot.walkTo(136, 145, 0))
     .then(() => bot.sitOrstand(1, 3))
 })
+
+GreeterBot.on('OBJECTSPEAK_$', (bot, msg) => {
+  if (msg.text.includes('has arrived.')) {
+    var newAvatar = msg.text.substring(1).split(' has arrived.')[0]
+    // Announces new user to Slack.
+    if (SlackEnabled) {
+      SlackClient.sendMessage(
+        `New Avatar arrived in Habitat: ${newAvatar}`, SlackChannelId)
+    }
+  }
+});
 
 HatcheryBot.connect()
 

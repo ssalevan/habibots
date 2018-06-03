@@ -8,6 +8,7 @@ trap 'kill %1; kill %2' SIGINT
 HABITAT_HOST="${HABIBOTS_HOST-app.neohabitat.org}"
 HABITAT_PORT="${HABIBOTS_PORT-1337}"
 CONVERSATIONALIST_REGION="${HABIBOTS_CONVERSATIONALIST_REGION-context-welcomecenterinthatch}"
+CONNECTOR_REGION="${HABIBOTS_CONNECTOR_REGION-context-Downtown_5f}"
 ELIZA_REGION="${HABIBOTS_ELIZA_REGION-context-Downtown_5f}"
 GREETER1_REGION="${HABIBOTS_GREETER1_REGION-context-welcomecenterinthatch}"
 HATCHERY_REGION="${HABIBOTS_HATCHERY_REGION-context-hatchery}"
@@ -27,6 +28,15 @@ if [[ "${@}" = *"greeter1"* ]]; then
     -p "${HABITAT_PORT}" \
     -l "newavatars" \
     -u phil &
+fi
+
+if [[ "${@}" = *"connector"* ]]; then
+  echo 'Launching connector...'
+  supervisor -w "${DIR}" -- bots/connector.js \
+    -c "${CONNECTOR_REGION}" \
+    -h "${HABITAT_HOST}" \
+    -p "${HABITAT_PORT}" \
+    -u connectorbot &
 fi
 
 if [[ "${@}" = *"conversationalist"* ]]; then
@@ -84,7 +94,7 @@ if [[ "${@}" = *"hatchery"* ]]; then
     -h "${HABITAT_HOST}" \
     -p "${HABITAT_PORT}" \
     -s "${SLACK_TOKEN}" \
-    -l "newavatars" \
+    -l "general" \
     -u welcomebot &
 fi
 
