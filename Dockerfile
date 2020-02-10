@@ -2,7 +2,7 @@
 #
 # VERSION              0.1.0
 
-FROM philcollins/aurora-centos7
+FROM centos:7
 
 # Ensures that the codebase is homed at /habibots.
 ADD . /habibots
