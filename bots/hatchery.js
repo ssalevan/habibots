@@ -132,7 +132,7 @@ HatcheryBot.on('CLOSE$', (bot, msg) => {
     .then(() => bot.sitOrstand(1, 3))
 })
 
-GreeterBot.on('OBJECTSPEAK_$', (bot, msg) => {
+HatcheryBot.on('OBJECTSPEAK_$', (bot, msg) => {
   if (msg.text.includes('has arrived.')) {
     var newAvatar = msg.text.substring(1).split(' has arrived.')[0]
     // Announces new user to Slack.
